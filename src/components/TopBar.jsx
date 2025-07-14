@@ -1,0 +1,167 @@
+import { useState } from "react"
+import { Link } from "react-router-dom"
+import { Film, Search, MapPin, User, LogOut, Settings, Sun, Moon, Menu } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useAuth } from "../context/AuthContext"
+import { useTheme } from "../context/ThemeContext"
+import { LoginModal } from "./LoginModal"
+
+export function TopBar() {
+    const [searchValue, setSearchValue] = useState("")
+    const [isSearchFocused, setIsSearchFocused] = useState(false)
+    const [loginOpen, setLoginOpen] = useState(false)
+
+    const { user, logout } = useAuth()
+    const { theme, toggleTheme } = useTheme()
+
+    const handleSearch = (e) => {
+        e.preventDefault()
+        console.log("Searching for:", searchValue)
+    }
+
+    return (
+        <>
+            <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="mx-auto container h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+                    {/* Left: Logo */}
+                    <Link to="/" className="flex items-center gap-2 shrink-0">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                            <Film className="h-5 w-5" />
+                        </div>
+                        <span className="text-xl font-bold text-primary hidden sm:inline">
+                            CineMax
+                        </span>
+                    </Link>
+
+                    {/* Center: Search Bar */}
+                    <div className="hidden sm:flex flex-1 max-w-2xl mx-4">
+                        <form onSubmit={handleSearch} className="relative w-full">
+                            <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isSearchFocused ? "text-primary" : "text-muted-foreground"}`} />
+                            <Input
+                                type="search"
+                                placeholder="Search for Movies, Events, Plays, Sports and Activities"
+                                className={`pl-10 bg-secondary/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${isSearchFocused ? "shadow-md" : ""}`}
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onBlur={() => setIsSearchFocused(false)}
+                            />
+                        </form>
+                    </div>
+
+                    {/* Right: Controls */}
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        {/* Mobile Search Icon */}
+                        <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => alert("Mobile search to be implemented")}>
+                            <Search className="h-5 w-5" />
+                        </Button>
+
+                        {/* Desktop Theme Toggle */}
+                        <Button variant="ghost" size="icon" onClick={toggleTheme} className="hidden sm:inline-flex rounded-full hover:bg-primary/10">
+                            {theme === "dark" ? <Sun className="h-5 w-5 hover:rotate-45" /> : <Moon className="h-5 w-5 hover:-rotate-45" />}
+                            <span className="sr-only">Toggle theme</span>
+                        </Button>
+
+                        {/* Desktop Location Selector */}
+                        <Button variant="ghost" className="hidden sm:flex items-center gap-2 text-sm">
+                            <MapPin className="h-4 w-4" />
+                            <span>Tirunelveli</span>
+                        </Button>
+
+                        {/* User or Sign In */}
+                        {user ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="flex items-center gap-2">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarFallback className="bg-primary text-primary-foreground">
+                                                {user.name?.charAt(0) || 'U'}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56">
+                                    <DropdownMenuLabel>
+                                        <div className="flex flex-col space-y-1">
+                                            <p className="text-sm font-medium">{user.name}</p>
+                                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <Link to="/profile" className="flex items-center gap-2">
+                                            <User className="h-4 w-4" />
+                                            Profile
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link to="/settings" className="flex items-center gap-2">
+                                            <Settings className="h-4 w-4" />
+                                            Settings
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={logout} className="flex items-center gap-2 text-destructive focus:text-destructive">
+                                        <LogOut className="h-4 w-4" />
+                                        Logout
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <Button size="sm" className="sm:inline-flex bg-primary text-primary-foreground" onClick={() => setLoginOpen(true)}>
+                                Sign in
+                            </Button>
+                        )}
+
+                        {/* Mobile Dropdown for Theme, Location, and Login */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="sm:hidden">
+                                    <Menu className="h-5 w-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={toggleTheme}>
+                                    {theme === "dark" ? (
+                                        <>
+                                            <Sun className="mr-2 h-4 w-4" />
+                                            Light Mode
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Moon className="mr-2 h-4 w-4" />
+                                            Dark Mode
+                                        </>
+                                    )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <MapPin className="mr-2 h-4 w-4" />
+                                    Tirunelveli
+                                </DropdownMenuItem>
+                                {!user && (
+                                    <DropdownMenuItem onClick={() => setLoginOpen(true)}>
+                                        <User className="mr-2 h-4 w-4" />
+                                        Sign In
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </div>
+            </div>
+
+            {/* Login Modal */}
+            <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
+        </>
+    )
+}
