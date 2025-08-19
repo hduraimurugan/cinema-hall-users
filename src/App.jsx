@@ -16,14 +16,12 @@ function App() {
           <Route element={
             <CinemaLayout />
           }>
-
             <Route path="/" element={<HomePage />} />
             <Route path="/movies" element={<HallManagement />} />
             <Route path="/theatres" element={<TheatresPage />} />
             <Route path="/bookings" element={<Bookings />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            
+            <Route path="/settings" element={<SettingsPage />} />  
           </Route>
 
           {/* Catch-all route - redirect to home */}
