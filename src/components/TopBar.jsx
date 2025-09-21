@@ -12,7 +12,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { useAuth } from "../context/AuthContext"
+import { useCustomerAuth } from "../context/CustomerAuthContext"
 import { useTheme } from "../context/ThemeContext"
 import { LoginModal } from "./LoginModal"
 
@@ -21,7 +21,7 @@ export function TopBar() {
     const [isSearchFocused, setIsSearchFocused] = useState(false)
     const [loginOpen, setLoginOpen] = useState(false)
 
-    const { user, logout } = useAuth()
+    const { customer, logout } = useCustomerAuth()
     const { theme, toggleTheme } = useTheme()
 
     const handleSearch = (e) => {
@@ -78,14 +78,14 @@ export function TopBar() {
                             <span>Tirunelveli</span>
                         </Button>
 
-                        {/* User or Sign In */}
-                        {user ? (
+                        {/* customer or Sign In */}
+                        {customer ? (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="flex items-center gap-2">
                                         <Avatar className="h-8 w-8">
                                             <AvatarFallback className="bg-primary text-primary-foreground">
-                                                {user.name?.charAt(0) || 'U'}
+                                                {customer.name?.charAt(0) || 'U'}
                                             </AvatarFallback>
                                         </Avatar>
                                     </Button>
@@ -93,14 +93,14 @@ export function TopBar() {
                                 <DropdownMenuContent align="end" className="w-56">
                                     <DropdownMenuLabel>
                                         <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-medium">{user.name}</p>
-                                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                                            <p className="text-sm font-medium">{customer.name}</p>
+                                            <p className="text-xs text-muted-foreground">{customer.email}</p>
                                         </div>
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
                                         <Link to="/profile" className="flex items-center gap-2">
-                                            <User className="h-4 w-4" />
+                                            <customer className="h-4 w-4" />
                                             Profile
                                         </Link>
                                     </DropdownMenuItem>
@@ -148,7 +148,7 @@ export function TopBar() {
                                     <MapPin className="mr-2 h-4 w-4" />
                                     Tirunelveli
                                 </DropdownMenuItem>
-                                {!user && (
+                                {!customer && (
                                     <DropdownMenuItem onClick={() => setLoginOpen(true)}>
                                         <User className="mr-2 h-4 w-4" />
                                         Sign In

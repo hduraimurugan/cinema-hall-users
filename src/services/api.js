@@ -73,4 +73,26 @@ export const customerAuthAPI = {
     if (!response.ok) throw new Error("Token refresh failed")
     return response.json()
   },
+
+  // ✅ Send OTP
+  sendOtp: async (email) => {
+    const response = await fetch(`${API_BASE_URL}/api/otp/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    })
+    if (!response.ok) throw new Error("Failed to send OTP")
+    return response.json()
+  },
+
+  // ✅ Verify OTP
+  verifyOtp: async (email, otp) => {
+    const response = await fetch(`${API_BASE_URL}/api/otp/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp }),
+    })
+    if (!response.ok) throw new Error("Failed to verify OTP")
+    return response.json()
+  },
 }

@@ -1,14 +1,14 @@
 // src/pages/ProfilePage.jsx
-import { useAuth } from '../context/AuthContext'
+import { useCustomerAuth } from '../context/CustomerAuthContext'
 
 export const ProfilePage = () => {
-  const { user } = useAuth()
+  const { customer } = useCustomerAuth()
 
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Your Profile</h2>
-      <p>Name: <strong>{user?.name}</strong></p>
-      <p>Email: <strong>{user?.email}</strong></p>
+      <p>Name: <strong>{customer?.name}</strong></p>
+      <p>Email: <strong>{customer?.email}</strong></p>
     </div>
   )
 }
