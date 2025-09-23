@@ -17,6 +17,7 @@ function App() {
             <CinemaLayout />
           }>
             
+            
             <Route path="/" element={<HomePage />} />
             <Route path="/movies" element={<HallManagement />} />
             <Route path="/theatres" element={<TheatresPage />} />
