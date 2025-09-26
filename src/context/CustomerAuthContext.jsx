@@ -48,11 +48,21 @@ export const CustomerAuthProvider = ({ children }) => {
     try {
       const res = await customerAuthAPI.login(email, password)
       setCustomer(res.customer)
+      console.log("Login successful:", res)
+
       return { success: true, customer: res.customer }
     } catch (err) {
-      return { success: false, message: err.message }
+      console.error("Login failed:", err.response || err.message)
+
+      return {
+        success: false,
+        message: err.message,      // Friendly error
+        details: err.response,     // Full backend response
+        error: err                 // Full error object
+      }
     }
   }
+
 
   // ✅ Logout
   const logout = async () => {

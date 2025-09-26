@@ -26,9 +26,21 @@ export const customerAuthAPI = {
       credentials: "include",
       body: JSON.stringify({ email, password }),
     })
-    if (!response.ok) throw new Error("Login failed")
-    return response.json()
-  },
+
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      console.log("Login error response data:", data) // Debug log
+
+      // Create an error object but also attach response data
+      const error = new Error(data?.error || data?.message || "Login failed")
+      error.response = data
+      throw error
+    }
+
+    return data
+  }
+  ,
 
   // ✅ Logout customer
   logout: async () => {

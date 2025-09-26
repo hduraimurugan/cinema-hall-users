@@ -56,26 +56,31 @@ export function LoginModal({ open, onOpenChange }) {
   }, [otpTimer]);
 
   // Handle Login
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setError('');
+  setLoading(true);
 
-    try {
-      await login(loginData.email, loginData.password);
+  try {
+    const result = await login(loginData.email, loginData.password);
+    
+    if (result.success) {
       toast.success("Welcome back!");
       onOpenChange(false);
       resetForms();
-    } catch (err) {
-      // Check if error is 403 (unverified account)
-      if (err.status === 403 || err.response?.status === 403) {
-        // Store email for OTP verification
+    } else {
+      // Handle different error scenarios based on message
+      const errorMessage = result.message || 'Login failed';
+
+      console.log("Login error message:", result); // Debug log
+    
+      if (errorMessage.includes('not verified') || errorMessage.includes('unverified')) {
+        // Account exists but not verified
         setSignupData(prev => ({
           ...prev,
           email: loginData.email
         }));
 
-        // Switch to signup tab and send OTP
         setActiveTab('signup');
 
         try {
@@ -85,17 +90,33 @@ export function LoginModal({ open, onOpenChange }) {
           toast.info("Account not verified. OTP sent to your email!");
           setError('');
         } catch (otpErr) {
+          console.error('OTP send error:', otpErr);
           setError(otpErr.message || 'Failed to send OTP');
           toast.error("Failed to send OTP");
         }
+      } else if (errorMessage.includes('Invalid') || errorMessage.includes('credentials')) {
+        setError('Invalid email or password');
+        toast.error("Invalid credentials");
+      } else if (errorMessage.includes('not found')) {
+        setError('Account not found. Please sign up first.');
+        toast.error("Account not found");
+      } else if (errorMessage.includes('too many') || errorMessage.includes('rate limit')) {
+        setError('Too many login attempts. Please try again later.');
+        toast.error("Too many attempts");
       } else {
-        setError(err.message || 'Invalid credentials');
+        setError(errorMessage);
         toast.error("Login failed");
       }
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (err) {
+    // Handle unexpected errors (network issues, etc.)
+    console.error('Login error:', err);
+    setError('Network error. Please try again.');
+    toast.error("Connection failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Add this new function after handleLogin
   const handleSignup = async () => {
