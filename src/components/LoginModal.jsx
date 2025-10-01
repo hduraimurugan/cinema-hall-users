@@ -15,6 +15,12 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
 import { RxLockClosed } from "react-icons/rx";
 import { MdMailOutline } from "react-icons/md";
 import { FiUser, FiPhone, FiShield } from "react-icons/fi";
@@ -56,67 +62,67 @@ export function LoginModal({ open, onOpenChange }) {
   }, [otpTimer]);
 
   // Handle Login
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setError('');
-  setLoading(true);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-  try {
-    const result = await login(loginData.email, loginData.password);
-    
-    if (result.success) {
-      toast.success("Welcome back!");
-      onOpenChange(false);
-      resetForms();
-    } else {
-      // Handle different error scenarios based on message
-      const errorMessage = result.message || 'Login failed';
+    try {
+      const result = await login(loginData.email, loginData.password);
 
-      console.log("Login error message:", result); // Debug log
-    
-      if (errorMessage.includes('not verified') || errorMessage.includes('unverified')) {
-        // Account exists but not verified
-        setSignupData(prev => ({
-          ...prev,
-          email: loginData.email
-        }));
-
-        setActiveTab('signup');
-
-        try {
-          await customerAuthAPI.sendOtp(loginData.email);
-          setOtpSent(true);
-          setOtpTimer(60);
-          toast.info("Account not verified. OTP sent to your email!");
-          setError('');
-        } catch (otpErr) {
-          console.error('OTP send error:', otpErr);
-          setError(otpErr.message || 'Failed to send OTP');
-          toast.error("Failed to send OTP");
-        }
-      } else if (errorMessage.includes('Invalid') || errorMessage.includes('credentials')) {
-        setError('Invalid email or password');
-        toast.error("Invalid credentials");
-      } else if (errorMessage.includes('not found')) {
-        setError('Account not found. Please sign up first.');
-        toast.error("Account not found");
-      } else if (errorMessage.includes('too many') || errorMessage.includes('rate limit')) {
-        setError('Too many login attempts. Please try again later.');
-        toast.error("Too many attempts");
+      if (result.success) {
+        toast.success("Welcome back!");
+        onOpenChange(false);
+        resetForms();
       } else {
-        setError(errorMessage);
-        toast.error("Login failed");
+        // Handle different error scenarios based on message
+        const errorMessage = result.message || 'Login failed';
+
+        console.log("Login error message:", result); // Debug log
+
+        if (errorMessage.includes('not verified') || errorMessage.includes('unverified')) {
+          // Account exists but not verified
+          setSignupData(prev => ({
+            ...prev,
+            email: loginData.email
+          }));
+
+          setActiveTab('signup');
+
+          try {
+            await customerAuthAPI.sendOtp(loginData.email);
+            setOtpSent(true);
+            setOtpTimer(60);
+            toast.info("Account not verified. OTP sent to your email!");
+            setError('');
+          } catch (otpErr) {
+            console.error('OTP send error:', otpErr);
+            setError(otpErr.message || 'Failed to send OTP');
+            toast.error("Failed to send OTP");
+          }
+        } else if (errorMessage.includes('Invalid') || errorMessage.includes('credentials')) {
+          setError('Invalid email or password');
+          toast.error("Invalid credentials");
+        } else if (errorMessage.includes('not found')) {
+          setError('Account not found. Please sign up first.');
+          toast.error("Account not found");
+        } else if (errorMessage.includes('too many') || errorMessage.includes('rate limit')) {
+          setError('Too many login attempts. Please try again later.');
+          toast.error("Too many attempts");
+        } else {
+          setError(errorMessage);
+          toast.error("Login failed");
+        }
       }
+    } catch (err) {
+      // Handle unexpected errors (network issues, etc.)
+      console.error('Login error:', err);
+      setError('Network error. Please try again.');
+      toast.error("Connection failed");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    // Handle unexpected errors (network issues, etc.)
-    console.error('Login error:', err);
-    setError('Network error. Please try again.');
-    toast.error("Connection failed");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Add this new function after handleLogin
   const handleSignup = async () => {
@@ -251,7 +257,7 @@ const handleLogin = async (e) => {
 
   return (
     <Dialog open={open} onOpenChange={handleModalChange}>
-      <DialogContent className="sm:max-w-[425px] p-0 gap-0">
+      <DialogContent className="sm:max-w-[525px] p-0 gap-0">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-center">
             <div className="flex justify-center mb-3">
@@ -336,7 +342,7 @@ const handleLogin = async (e) => {
             <form onSubmit={otpSent ? handleVerifyAndSignup : (e) => { e.preventDefault(); handleSignup(); }}>
               <CardContent className="space-y-4 px-6">
                 {!otpSent ? (
-                  <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="signup-name">Full Name</Label>
                       <div className="relative">
@@ -405,7 +411,7 @@ const handleLogin = async (e) => {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="confirm-password">Confirm Password</Label>
                       <div className="relative">
                         <HiOutlineKey className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -421,7 +427,7 @@ const handleLogin = async (e) => {
                         />
                       </div>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <>
                     <div className="text-center py-4">
@@ -438,18 +444,27 @@ const handleLogin = async (e) => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="otp">Enter OTP</Label>
-                      <Input
-                        id="otp"
-                        type="text"
-                        placeholder="000000"
-                        className="text-center text-lg tracking-widest font-mono"
-                        maxLength={6}
-                        value={signupData.otp}
-                        onChange={(e) => setSignupData({ ...signupData, otp: e.target.value.replace(/\D/g, '') })}
-                        required
-                        disabled={loading}
-                      />
+                      <Label htmlFor="otp" className="text-center block">Enter OTP</Label>
+                      <div className="flex justify-center">
+                        <InputOTP
+                          maxLength={6}
+                          value={signupData.otp}
+                          onChange={(value) => setSignupData({ ...signupData, otp: value })}
+                          disabled={loading}
+                        >
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                          </InputOTPGroup>
+                          {/* <InputOTPSeparator /> */}
+                          <InputOTPGroup>
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
                     </div>
 
                     <div className="text-center">
