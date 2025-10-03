@@ -7,6 +7,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { CinemaLayout } from './components/CinemaLayout.jsx';
 import { SettingsPage } from './pages/SettingsPage.jsx';
 import TheatresPage from './pages/TheatresPage.jsx';
+import MoviesPage from './pages/MoviesPage.jsx';
 
 function App() {
   return (
@@ -18,7 +19,7 @@ function App() {
           }>
                       
             <Route path="/" element={<HomePage />} />
-            <Route path="/movies" element={<HallManagement />} />
+            <Route path="/movies" element={<MoviesPage />} />
             <Route path="/theatres" element={<TheatresPage />} />
             <Route path="/bookings" element={<Bookings />} />
             <Route path="/profile" element={<ProfilePage />} />
