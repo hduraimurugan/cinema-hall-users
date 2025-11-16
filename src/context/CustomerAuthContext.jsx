@@ -1,5 +1,5 @@
 // context/CustomerAuthContext.jsx
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { customerAuthAPI } from "../services/api.js"
 
 const CustomerAuthContext = createContext()
@@ -7,6 +7,53 @@ const CustomerAuthContext = createContext()
 export const CustomerAuthProvider = ({ children }) => {
   const [customer, setCustomer] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [locationUpdated, setLocationUpdated] = useState(false)
+
+  // 🌍 Get location and update district/state
+  const updateLocationDetails = useCallback(async () => {
+    try {
+      // Request location permission
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        })
+      })
+
+      const { latitude, longitude } = position.coords
+
+      // Fetch location details from API
+      const response = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}`
+      )
+
+      if (!response.ok) throw new Error("Failed to fetch location details")
+
+      const locationData = await response.json()
+
+      // Extract district and state
+      const state = locationData.principalSubdivision || ""
+      const district = locationData.city || ""
+
+      // Update customer profile with district and state
+      if (state || district) {
+        const result = await customerAuthAPI.update({ district, state })
+        setCustomer(result.customer)
+        return { success: true, district, state }
+      }
+
+      return { success: false, message: "Could not extract location details" }
+    } catch (err) {
+      console.error("Location update failed:", err)
+      return {
+        success: false,
+        message: err.message === "User denied Geolocation"
+          ? "Location permission denied"
+          : "Failed to get location"
+      }
+    }
+  }, [])
 
   // 🔄 Load session on mount
   useEffect(() => {
@@ -43,6 +90,15 @@ export const CustomerAuthProvider = ({ children }) => {
     initializeSession()
   }, [])
 
+  // 🌍 Update location on customer login/load
+  useEffect(() => {
+    if (customer && !loading && !locationUpdated) {
+      updateLocationDetails().then(() => {
+        setLocationUpdated(true)
+      })
+    }
+  }, [customer, loading, locationUpdated, updateLocationDetails])
+
   // ✅ Login
   const login = async (email, password) => {
     try {
@@ -69,6 +125,7 @@ export const CustomerAuthProvider = ({ children }) => {
     try {
       await customerAuthAPI.logout()
       setCustomer(null)
+      setLocationUpdated(false)
     } catch (err) {
       console.error("Logout failed:", err)
     }
@@ -103,6 +160,7 @@ export const CustomerAuthProvider = ({ children }) => {
     logout,
     signup,
     update,
+    updateLocationDetails,
   }
 
   return (

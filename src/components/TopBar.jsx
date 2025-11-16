@@ -73,9 +73,20 @@ export function TopBar() {
                         </Button>
 
                         {/* Desktop Location Selector */}
-                        <Button variant="ghost" className="hidden sm:flex items-center gap-2 text-sm">
-                            <MapPin className="h-4 w-4" />
-                            <span>Tirunelveli</span>
+                        <Button
+                            variant="ghost"
+                            className="hidden sm:flex items-center gap-2 text-sm rounded-full px-4 py-2 hover:bg-primary/10 transition-all duration-200 group border border-border/50 hover:border-primary/30"
+                        >
+                            <MapPin className="h-4 w-4 text-primary group-hover:scale-110 transition-transform duration-200" />
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-medium text-foreground">{customer?.district || "Select"}</span>
+                                {customer?.district && customer?.state && (
+                                    <>
+                                        <span className="text-muted-foreground">•</span>
+                                        <span className="text-muted-foreground text-xs">{customer?.state}</span>
+                                    </>
+                                )}
+                            </div>
                         </Button>
 
                         {/* customer or Sign In */}
@@ -145,8 +156,16 @@ export function TopBar() {
                                     )}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
-                                    <MapPin className="mr-2 h-4 w-4" />
-                                    Tirunelveli
+                                    <MapPin className="mr-2 h-4 w-4 text-primary" />
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-medium">{customer?.district || "Select Location"}</span>
+                                        {customer?.district && customer?.state && (
+                                            <>
+                                                <span className="text-muted-foreground">•</span>
+                                                <span className="text-muted-foreground text-xs">{customer?.state}</span>
+                                            </>
+                                        )}
+                                    </div>
                                 </DropdownMenuItem>
                                 {!customer && (
                                     <DropdownMenuItem onClick={() => setLoginOpen(true)}>
