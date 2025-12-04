@@ -16,6 +16,7 @@ export function useCarousel() {
 
 export function Carousel({
   opts,
+  setApi,
   orientation = "horizontal",
   plugins = [],
   className,
@@ -29,6 +30,13 @@ export function Carousel({
     },
     plugins
   )
+
+  React.useEffect(() => {
+    if (!api || !setApi) {
+      return
+    }
+    setApi(api)
+  }, [api, setApi])
 
   return (
     <CarouselContext.Provider value={{ carouselRef, api, orientation }}>

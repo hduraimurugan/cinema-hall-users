@@ -1,11 +1,12 @@
 import React from 'react'
 import AdBanner from '../components/AdBanner'
+import MoviesList from '../components/MoviesList'
 
 const MoviesPage = () => {
   return (
     <>
-    <AdBanner />
-    <div>MoviesPage</div>
+      <AdBanner />
+      <MoviesList />
     </>
   )
 }

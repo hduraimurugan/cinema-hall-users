@@ -1,87 +1,135 @@
 import * as React from "react";
-
-// Import the Autoplay plugin for the carousel
 import Autoplay from "embla-carousel-autoplay";
-
-// Import the necessary shadcn/ui components
+import { cn } from "@/lib/utils";
 import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-} from "@/components/ui/carousel"; // Assumes your shadcn components are in @/components/ui
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+} from "@/components/ui/carousel";
 
-// --- Mock Data ---
-// I've created this array to mimic the banners in your screenshot.
-// You can replace these with your own banner data.
+// Banner data - Replace these URLs with your actual banner images
 const banners = [
-  {
-    id: 1,
-    // Placeholder for the "YES BANK" ad.
-    src: "https://placehold.co/1200x380/4A3F8B/FFFFFF?text=YES+BANK+Rupay",
-    alt: "Yes Bank RuPay Ad",
-  },
-  {
-    id: 2,
-    // Placeholder for the "LINKIN PARK" ad.
-    src: "https://placehold.co/1200x380/990000/FFFFFF?text=LINKIN+PARK+WORLD+TOUR",
-    alt: "Linkin Park World Tour Ad",
-  },
-  {
-    id: 3,
-    // Placeholder for the "Festivities" ad.
-    src: "https://placehold.co/1200x380/0A214C/FDE047?text=LET+THE+FESTIVITIES+BEGIN",
-    alt: "Festivities Begin Ad",
-  },
+    {
+        id: 1,
+        src: "https://placehold.co/1200x300/DC143C/FFFFFF?text=LET+THE+FESTIVITIES+BEGIN",
+        alt: "Festivities Begin - Theme Parks and Activities",
+    },
+    {
+        id: 2,
+        src: "https://placehold.co/1200x300/1a1a2e/FFFFFF?text=STREAM+-+Join+the+Revolution",
+        alt: "BookMyShow Stream",
+    },
+    {
+        id: 3,
+        src: "https://placehold.co/1200x300/990000/FFFFFF?text=Special+Event+Banner",
+        alt: "Special Event",
+    },
+    {
+        id: 4,
+        src: "https://placehold.co/1200x300/4A3F8B/FFFFFF?text=Bank+Offers+Available",
+        alt: "Bank Offers",
+    },
 ];
-// --- End Mock Data ---
 
 const AdBanner = () => {
-  // Set up the autoplay plugin
-  const plugin = React.useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: true }) // 5-second delay per banner
-  );
+    const [currentIndex, setCurrentIndex] = React.useState(0);
+    const [emblaApi, setEmblaApi] = React.useState(null);
 
-  return (
-    // Use a <section> tag for semantic HTML
-    <section className="w-full py-2 md:py-4">
-      <Carousel
-        plugins={[plugin.current]}
-        className="w-full max-w-6xl mx-auto" // Centers and constrains the width like in the screenshot
-        onMouseEnter={plugin.current.stop} // Pauses autoplay on hover
-        onMouseLeave={plugin.current.reset} // Resumes autoplay on mouse leave
-        opts={{
-          loop: true, // Ensures the carousel loops infinitely
-        }}
-      >
-        <CarouselContent>
-          {banners.map((banner) => (
-            <CarouselItem key={banner.id}>
-              <div className="p-1">
-                {/* The image uses an aspect-ratio to maintain its shape 
-                  and prevent layout shift while loading.
-                  The aspect-[3/1] (3:1) is very close to the 1200x380/1200x400
-                  dimensions of typical ad banners.
-                */}
-                <img
-                  src={banner.src}
-                  alt={banner.alt}
-                  className="w-full h-auto object-cover rounded-lg aspect-[3/1] md:aspect-[3.2/1]"
-                />
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        
-        {/* Navigation buttons. I've styled them to be discreet,
-          as they aren't prominent in the screenshot.
-        */}
-        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-900 rounded-full h-8 w-8" />
-        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-900 rounded-full h-8 w-8" />
-      </Carousel>
-    </section>
-  );
+    // Auto-play plugin with 3 second interval
+    const autoplayPlugin = React.useRef(
+        Autoplay({ delay: 3000, stopOnInteraction: false })
+    );
+
+    // Track the current slide and sync with carousel
+    React.useEffect(() => {
+        if (!emblaApi) {
+            console.log("Embla API not ready");
+            return;
+        }
+
+        console.log("Embla API initialized");
+
+        // Set initial index
+        const initialIndex = emblaApi.selectedScrollSnap();
+        console.log("Initial index:", initialIndex);
+        setCurrentIndex(initialIndex);
+
+        // Listen for slide changes
+        const handleSelect = () => {
+            //   const newIndex = emblaApi.selectedScrollSnap();
+            const newIndex = emblaApi.selectedScrollSnap();
+            console.log("Slide changed to index:", newIndex);
+            setCurrentIndex(newIndex);
+        };
+
+        emblaApi.on("select", handleSelect);
+
+        // Cleanup
+        return () => {
+            emblaApi.off("select", handleSelect);
+        };
+    }, [emblaApi]);
+
+    const handleDotClick = (index) => {
+        if (emblaApi) {
+            emblaApi.scrollTo(index);   // <-- keep this (works with proper emblaApi)
+        }
+    };
+
+
+    return (
+        <section className="w-full py-2 px-3 md:px-6 lg:px-8">
+            <div className="max-w-[1400px] mx-auto">
+                <Carousel
+                    setApi={setEmblaApi}
+                    plugins={[autoplayPlugin.current]}
+                    className="w-full relative"
+                    opts={{
+                        loop: true,
+                        align: "center",
+                        containScroll: "trimSnaps",
+                        watchDrag: false,
+                    }}
+                >
+                    <CarouselContent className="-ml-2 md:-ml-3">
+                        {banners.map((banner) => (
+                            <CarouselItem
+                                key={banner.id}
+                                className="pl-2 md:pl-3 basis-[88%] sm:basis-[90%] md:basis-[92%]"
+                            >
+                                <div className="relative w-full overflow-hidden rounded-lg md:rounded-xl shadow-md">
+                                    <img
+                                        src={banner.src}
+                                        alt={banner.alt}
+                                        className="w-full h-auto object-cover aspect-[3/1] sm:aspect-[3.5/1] md:aspect-[4.5/1] lg:aspect-[5/1]"
+                                    />
+                                </div>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+
+                    {/* Dot Indicators - positioned absolutely at the bottom center */}
+                    <div className="absolute bottom-2 md:bottom-5 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2 z-10">
+                        {banners.map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => handleDotClick(index)}
+                                type="button"
+                                className={cn(
+                                    "rounded-full transition-all duration-300 cursor-pointer",
+                                    currentIndex === index
+                                        ? "bg-white w-5 md:w-6 h-1.5 md:h-2"
+                                        : "bg-white/50 hover:bg-white/75 w-1.5 md:w-2 h-1.5 md:h-2"
+                                )}
+                                aria-label={`Go to slide ${index + 1}`}
+                                aria-current={currentIndex === index ? "true" : "false"}
+                            />
+                        ))}
+                    </div>
+                </Carousel>
+            </div>
+        </section>
+    );
 };
 
 export default AdBanner;
