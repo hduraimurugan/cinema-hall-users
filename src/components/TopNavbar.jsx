@@ -17,7 +17,7 @@ export function TopNavbar() {
 
   return (
     <div className="border-b bg-background">
-      <div className="flex mx-auto container h-12 items-center justify-between px-4 lg:px-6">
+      <div className="flex mx-auto container h-12 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Main Navigation */}
         <nav className="flex items-center space-x-8">
           {navigationItems.map((item) => {

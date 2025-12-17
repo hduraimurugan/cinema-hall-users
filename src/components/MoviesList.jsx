@@ -60,7 +60,7 @@ const MovieCard = ({ movie }) => {
         <h3 className="font-semibold text-base md:text-lg text-gray-900 dark:text-white line-clamp-1">
           {movie.title}
         </h3>
-        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-xs md:text-xs text-gray-600 dark:text-gray-400 mt-1">
           {genresText}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
@@ -201,7 +201,7 @@ const MoviesList = ({
               {movies.map((movie) => (
                 <div
                   key={movie.id}
-                  className="w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] flex-shrink-0"
+                  className="w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] flex-shrink-0 gap-4"
                 >
                   <MovieCard movie={movie} />
                 </div>
