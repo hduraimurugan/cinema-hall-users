@@ -8,6 +8,9 @@ import { CinemaLayout } from './components/CinemaLayout.jsx';
 import { SettingsPage } from './pages/SettingsPage.jsx';
 import TheatresPage from './pages/TheatresPage.jsx';
 import MoviesPage from './pages/MoviesPage.jsx';
+import MovieDetailsPage from './pages/MovieDetailsPage.jsx';
+import SeatSelectionPage from './pages/SeatSelectionPage.jsx';
+import BookingSuccessPage from './pages/BookingSuccessPage.jsx';
 
 function App() {
   return (
@@ -17,14 +20,17 @@ function App() {
           <Route element={
             <CinemaLayout />
           }>
-                      
+
             <Route path="/" element={<HomePage />} />
             <Route path="/movies" element={<MoviesPage />} />
+            <Route path="/movie/:movieId" element={<MovieDetailsPage />} />
+            <Route path="/show/:showId" element={<SeatSelectionPage />} />
+            <Route path="/booking/success" element={<BookingSuccessPage />} />
             <Route path="/theatres" element={<TheatresPage />} />
             <Route path="/bookings" element={<Bookings />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
-              
+
           </Route>
 
           {/* Catch-all route - redirect to home */}

@@ -210,3 +210,83 @@ export const customerMoviesAPI = {
     return response.json()
   },
 }
+
+// ✅ Booking API (Concurrency-safe seat booking)
+export const bookingAPI = {
+  // Hold seats (start booking process)
+  holdSeats: async (show_id, seats) => {
+    const response = await fetch(`${API_BASE_URL}/api/booking/hold`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ show_id, seats })
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  // Confirm booking (after payment)
+  confirmBooking: async (show_id, seats, total_amount) => {
+    const response = await fetch(`${API_BASE_URL}/api/booking/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ show_id, seats, total_amount })
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  // Release seats (cancel)
+  releaseSeats: async (show_id, seats) => {
+    const response = await fetch(`${API_BASE_URL}/api/booking/release`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ show_id, seats })
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  }
+};
+
+// ✅ Payment API (Razorpay integration)
+export const paymentAPI = {
+  // Create Razorpay order
+  createOrder: async (show_id, seats, amount) => {
+    const response = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ show_id, seats, amount })
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  // Verify payment after Razorpay checkout
+  verifyPayment: async (paymentData) => {
+    const response = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(paymentData)
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  }
+};
+
+// ✅ Shows API (Get show details with seat layout)
+export const showsAPI = {
+  // Get show details with seat layout
+  getShowById: async (showId) => {
+    const response = await fetch(`${API_BASE_URL}/api/shows/get/${showId}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Failed to fetch show details");
+    return response.json();
+  }
+};
+

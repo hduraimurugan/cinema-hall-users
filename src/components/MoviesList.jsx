@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { customerMoviesAPI } from '../services/api';
 import { Skeleton } from './ui/skeleton';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
@@ -19,6 +20,8 @@ const MovieCardSkeleton = () => {
 };
 
 const MovieCard = ({ movie }) => {
+  const navigate = useNavigate();
+
   // Format genres array to string
   const genresText = Array.isArray(movie.genre) ? movie.genre.join('/') : movie.genre || 'N/A';
 
@@ -26,7 +29,10 @@ const MovieCard = ({ movie }) => {
   const languageText = Array.isArray(movie.language) ? movie.language.join(', ') : movie.language || 'N/A';
 
   return (
-    <div className="group cursor-pointer flex-shrink-0 w-full">
+    <div
+      onClick={() => navigate(`/movie/${movie.id}`)}
+      className="group cursor-pointer flex-shrink-0 w-full"
+    >
       <div className="relative overflow-hidden rounded-lg">
         {/* Movie Poster with Lazy Loading */}
         <LazyLoadImage
