@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 const MovieDetailsPage = () => {
     const { movieId } = useParams();
     const navigate = useNavigate();
-    const { customer } = useCustomerAuth();
+    const { customer, district, state } = useCustomerAuth();
 
     const [movie, setMovie] = useState(null);
     const [cinemaHalls, setCinemaHalls] = useState([]);
@@ -21,8 +21,6 @@ const MovieDetailsPage = () => {
     const fetchMovieShowtimes = async () => {
         try {
             setLoading(true);
-            const district = customer?.district || '';
-            const state = customer?.state || '';
 
             const data = await customerMoviesAPI.getMovieDetailsWithShowtimes(movieId, district, state);
             setMovie(data.movie);

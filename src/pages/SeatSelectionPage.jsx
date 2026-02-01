@@ -4,6 +4,7 @@ import { showsAPI, bookingAPI } from '../services/api';
 import { useRazorpayPayment } from '../hooks/useRazorpayPayment';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
+import { LoginModal } from '../components/LoginModal';
 
 const SeatSelectionPage = () => {
     const { showId } = useParams();
@@ -17,6 +18,7 @@ const SeatSelectionPage = () => {
     const [holdExpiry, setHoldExpiry] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [loginOpen, setLoginOpen] = useState(false);
 
     useEffect(() => {
         fetchShowDetails();
@@ -88,6 +90,8 @@ const SeatSelectionPage = () => {
         if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') return;
         if (holdExpiry) return; // Can't change after holding
 
+        console.log("seat", seat);
+
         setSelectedSeats(prev => {
             if (prev.includes(seat.id)) {
                 return prev.filter(id => id !== seat.id);
@@ -104,9 +108,11 @@ const SeatSelectionPage = () => {
         }
 
         if (!customer) {
-            toast.error('Please login to continue');
+            setLoginOpen(true);
             return;
         }
+
+        console.log("selectedSeats", selectedSeats);
 
         try {
             setIsProcessing(true);
@@ -470,6 +476,9 @@ const SeatSelectionPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* Login Modal */}
+            <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
         </div>
     );
 };

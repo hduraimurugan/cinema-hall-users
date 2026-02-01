@@ -21,7 +21,7 @@ function App() {
             <CinemaLayout />
           }>
 
-            <Route path="/" element={<HomePage />} />
+            {/* <Route path="/" element={<HomePage />} /> */}
             <Route path="/movies" element={<MoviesPage />} />
             <Route path="/movie/:movieId" element={<MovieDetailsPage />} />
             <Route path="/show/:showId" element={<SeatSelectionPage />} />
@@ -34,7 +34,7 @@ function App() {
           </Route>
 
           {/* Catch-all route - redirect to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/movies" replace />} />
         </Routes>
       </Router>
       <Toaster position="top-right" />

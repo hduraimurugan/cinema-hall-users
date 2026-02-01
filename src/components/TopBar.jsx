@@ -21,7 +21,7 @@ export function TopBar() {
     const [isSearchFocused, setIsSearchFocused] = useState(false)
     const [loginOpen, setLoginOpen] = useState(false)
 
-    const { customer, logout } = useCustomerAuth()
+    const { customer, logout, district, state } = useCustomerAuth()
     const { theme, toggleTheme } = useTheme()
 
     const handleSearch = (e) => {
@@ -79,11 +79,11 @@ export function TopBar() {
                         >
                             <MapPin className="h-4 w-4 text-primary group-hover:scale-110 transition-transform duration-200" />
                             <div className="flex items-center gap-1.5">
-                                <span className="font-medium text-foreground">{customer?.district || "Select"}</span>
-                                {customer?.district && customer?.state && (
+                                <span className="font-medium text-foreground">{district || "Select"}</span>
+                                {district && state && (
                                     <>
                                         <span className="text-muted-foreground">•</span>
-                                        <span className="text-muted-foreground text-xs">{customer?.state}</span>
+                                        <span className="text-muted-foreground text-xs">{state}</span>
                                     </>
                                 )}
                             </div>
@@ -158,11 +158,11 @@ export function TopBar() {
                                 <DropdownMenuItem>
                                     <MapPin className="mr-2 h-4 w-4 text-primary" />
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-medium">{customer?.district || "Select Location"}</span>
-                                        {customer?.district && customer?.state && (
+                                        <span className="font-medium">{district || "Select Location"}</span>
+                                        {district && state && (
                                             <>
                                                 <span className="text-muted-foreground">•</span>
-                                                <span className="text-muted-foreground text-xs">{customer?.state}</span>
+                                                <span className="text-muted-foreground text-xs">{state}</span>
                                             </>
                                         )}
                                     </div>

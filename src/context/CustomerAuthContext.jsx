@@ -7,11 +7,36 @@ const CustomerAuthContext = createContext()
 export const CustomerAuthProvider = ({ children }) => {
   const [customer, setCustomer] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [locationUpdated, setLocationUpdated] = useState(false)
+  const [district, setDistrict] = useState("")
+  const [state, setState] = useState("")
+  const [locationLoading, setLocationLoading] = useState(false)
 
-  // 🌍 Get location and update district/state
-  const updateLocationDetails = useCallback(async () => {
+  // 🌍 Get location and update district/state (available for all users)
+  const fetchLocationDetails = useCallback(async () => {
     try {
+      setLocationLoading(true)
+
+      // Check localStorage for cached location (valid for 24 hours)
+      const cachedLocation = localStorage.getItem('user_location')
+      if (cachedLocation) {
+        try {
+          const { district: cachedDistrict, state: cachedState, timestamp } = JSON.parse(cachedLocation)
+          const cacheAge = Date.now() - timestamp
+          const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000
+
+          // Use cached data if it's less than 24 hours old
+          if (cacheAge < TWENTY_FOUR_HOURS && (cachedDistrict || cachedState)) {
+            setState(cachedState)
+            setDistrict(cachedDistrict)
+            setLocationLoading(false)
+            console.log("Using cached location:", { district: cachedDistrict, state: cachedState })
+            return { success: true, district: cachedDistrict, state: cachedState, cached: true }
+          }
+        } catch {
+          console.log("Invalid cache, fetching fresh location")
+        }
+      }
+
       // Request location permission
       const position = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -33,19 +58,31 @@ export const CustomerAuthProvider = ({ children }) => {
       const locationData = await response.json()
 
       // Extract district and state
-      const state = locationData.principalSubdivision || ""
-      const district = locationData.city || ""
+      const detectedState = locationData.principalSubdivision || ""
+      const detectedDistrict = locationData.city || ""
 
-      // Update customer profile with district and state
-      if (state || district) {
-        const result = await customerAuthAPI.update({ district, state })
-        setCustomer(result.customer)
-        return { success: true, district, state }
+      // Update local state and cache (available for all users)
+      if (detectedState || detectedDistrict) {
+        setState(detectedState)
+        setDistrict(detectedDistrict)
+
+        // Cache location data in localStorage
+        localStorage.setItem('user_location', JSON.stringify({
+          district: detectedDistrict,
+          state: detectedState,
+          timestamp: Date.now()
+        }))
+
+        setLocationLoading(false)
+        console.log("Fetched and cached new location:", { district: detectedDistrict, state: detectedState })
+        return { success: true, district: detectedDistrict, state: detectedState }
       }
 
+      setLocationLoading(false)
       return { success: false, message: "Could not extract location details" }
     } catch (err) {
-      console.error("Location update failed:", err)
+      console.error("Location fetch failed:", err)
+      setLocationLoading(false)
       return {
         success: false,
         message: err.message === "User denied Geolocation"
@@ -55,7 +92,29 @@ export const CustomerAuthProvider = ({ children }) => {
     }
   }, [])
 
-  // 🔄 Load session on mount
+  // 🔄 Update profile with current location (only for logged-in users)
+  const updateProfileWithLocation = useCallback(async () => {
+    if (!customer) return { success: false, message: "User not logged in" }
+
+    try {
+      // Use current district and state from context
+      if (state || district) {
+        const result = await customerAuthAPI.update({ district, state })
+        setCustomer(result.customer)
+        return { success: true, district, state }
+      }
+
+      return { success: false, message: "No location data available" }
+    } catch (err) {
+      console.error("Profile location update failed:", err)
+      return {
+        success: false,
+        message: "Failed to update profile with location"
+      }
+    }
+  }, [customer, district, state])
+
+  // 🔄 Load session and location on mount
   useEffect(() => {
     const initializeSession = async () => {
       const fetchCustomer = async () => {
@@ -85,19 +144,13 @@ export const CustomerAuthProvider = ({ children }) => {
       }
 
       setLoading(false)
+
+      // 🌍 Fetch location for ALL users (logged in or not)
+      fetchLocationDetails()
     }
 
     initializeSession()
-  }, [])
-
-  // 🌍 Update location on customer login/load
-  useEffect(() => {
-    if (customer && !loading && !locationUpdated) {
-      updateLocationDetails().then(() => {
-        setLocationUpdated(true)
-      })
-    }
-  }, [customer, loading, locationUpdated, updateLocationDetails])
+  }, [fetchLocationDetails])
 
   // ✅ Login
   const login = async (email, password) => {
@@ -105,6 +158,11 @@ export const CustomerAuthProvider = ({ children }) => {
       const res = await customerAuthAPI.login(email, password)
       setCustomer(res.customer)
       console.log("Login successful:", res)
+
+      // 🌍 Update profile with current location after successful login
+      if (district || state) {
+        await updateProfileWithLocation()
+      }
 
       return { success: true, customer: res.customer }
     } catch (err) {
@@ -125,7 +183,7 @@ export const CustomerAuthProvider = ({ children }) => {
     try {
       await customerAuthAPI.logout()
       setCustomer(null)
-      setLocationUpdated(false)
+      // Location state persists even after logout
     } catch (err) {
       console.error("Logout failed:", err)
     }
@@ -156,11 +214,15 @@ export const CustomerAuthProvider = ({ children }) => {
     customer,
     isLoggedIn: !!customer,
     loading,
+    locationLoading,
+    district,
+    state,
     login,
     logout,
     signup,
     update,
-    updateLocationDetails,
+    fetchLocationDetails,
+    updateProfileWithLocation,
   }
 
   return (
