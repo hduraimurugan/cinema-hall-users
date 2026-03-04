@@ -6,6 +6,7 @@ const BookingSuccessPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const booking = location.state?.booking;
+    const seatLabels = location.state?.seatLabels;
 
     useEffect(() => {
         if (!booking) {
@@ -17,7 +18,10 @@ const BookingSuccessPage = () => {
         return null;
     }
 
-    const seats = Array.isArray(booking.seats) ? booking.seats : JSON.parse(booking.seats || '[]');
+    const seats = seatLabels?.length
+        ? seatLabels
+        : Array.isArray(booking.seats) ? booking.seats : JSON.parse(booking.seats || '[]');
+    
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
@@ -43,7 +47,7 @@ const BookingSuccessPage = () => {
                         <div>
                             <p className="text-sm text-muted-foreground">Status</p>
                             <span className="inline-block px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full">
-                                {booking.status}
+                                {booking.booking_status}
                             </span>
                         </div>
                     </div>

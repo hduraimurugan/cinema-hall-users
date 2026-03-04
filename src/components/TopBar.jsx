@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Film, Search, MapPin, User, LogOut, Settings, Sun, Moon, Menu } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -15,14 +15,23 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useCustomerAuth } from "../context/CustomerAuthContext"
 import { useTheme } from "../context/ThemeContext"
 import { LoginModal } from "./LoginModal"
+import { LocationModal } from "./LocationModal"
 
 export function TopBar() {
     const [searchValue, setSearchValue] = useState("")
     const [isSearchFocused, setIsSearchFocused] = useState(false)
     const [loginOpen, setLoginOpen] = useState(false)
+    const [locationOpen, setLocationOpen] = useState(false)
 
-    const { customer, logout, district, state } = useCustomerAuth()
+    const { customer, logout, district, state, locationLoading } = useCustomerAuth()
     const { theme, toggleTheme } = useTheme()
+
+    // Auto-open location modal when no location is available
+    useEffect(() => {
+        if (!locationLoading && !district && !state) {
+            setLocationOpen(true)
+        }
+    }, [locationLoading, district, state])
 
     const handleSearch = (e) => {
         e.preventDefault()
@@ -76,6 +85,7 @@ export function TopBar() {
                         <Button
                             variant="ghost"
                             className="hidden sm:flex items-center gap-2 text-sm rounded-full px-4 py-2 hover:bg-primary/10 transition-all duration-200 group border border-border/50 hover:border-primary/30"
+                            onClick={() => setLocationOpen(true)}
                         >
                             <MapPin className="h-4 w-4 text-primary group-hover:scale-110 transition-transform duration-200" />
                             <div className="flex items-center gap-1.5">
@@ -155,7 +165,7 @@ export function TopBar() {
                                         </>
                                     )}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setLocationOpen(true)}>
                                     <MapPin className="mr-2 h-4 w-4 text-primary" />
                                     <div className="flex items-center gap-1.5">
                                         <span className="font-medium">{district || "Select Location"}</span>
@@ -181,6 +191,9 @@ export function TopBar() {
 
             {/* Login Modal */}
             <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
+
+            {/* Location Modal */}
+            <LocationModal open={locationOpen} onOpenChange={setLocationOpen} />
         </>
     )
 }

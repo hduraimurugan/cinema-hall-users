@@ -92,6 +92,29 @@ export const CustomerAuthProvider = ({ children }) => {
     }
   }, [])
 
+  // 📍 Manually set location (from LocationModal)
+  const setLocationManually = useCallback(async (city, stateName) => {
+    setDistrict(city)
+    setState(stateName)
+
+    // Cache in localStorage (same format as geolocation cache)
+    localStorage.setItem('user_location', JSON.stringify({
+      district: city,
+      state: stateName,
+      timestamp: Date.now()
+    }))
+
+    // If logged in, also update backend profile
+    if (customer) {
+      try {
+        const result = await customerAuthAPI.update({ district: city, state: stateName })
+        setCustomer(result.customer)
+      } catch (err) {
+        console.error("Failed to update profile with manual location:", err)
+      }
+    }
+  }, [customer])
+
   // 🔄 Update profile with current location (only for logged-in users)
   const updateProfileWithLocation = useCallback(async () => {
     if (!customer) return { success: false, message: "User not logged in" }
@@ -223,6 +246,7 @@ export const CustomerAuthProvider = ({ children }) => {
     update,
     fetchLocationDetails,
     updateProfileWithLocation,
+    setLocationManually,
   }
 
   return (
