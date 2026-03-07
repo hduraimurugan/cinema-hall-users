@@ -49,7 +49,7 @@ const BookingCard = ({ booking }) => {
           </div>
         </div>
         <span className={`shrink-0 inline-block px-3 py-1 text-xs font-semibold rounded-full ${statusColors[booking.booking_status] || statusColors.confirmed}`}>
-          {booking.booking_status}
+          {booking.booking_status?.charAt(0).toUpperCase() + booking.booking_status?.slice(1)}
         </span>
       </div>
 

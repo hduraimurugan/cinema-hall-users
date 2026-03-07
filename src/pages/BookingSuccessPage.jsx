@@ -83,7 +83,7 @@ const BookingSuccessPage = () => {
                         <div>
                             <p className="text-sm text-muted-foreground">Status</p>
                             <span className="inline-block px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full">
-                                {booking.booking_status}
+                                {booking.booking_status?.charAt(0).toUpperCase() + booking.booking_status?.slice(1)}
                             </span>
                         </div>
                     </div>
