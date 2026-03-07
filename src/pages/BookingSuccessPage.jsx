@@ -1,27 +1,52 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { CheckCircle, Loader2 } from 'lucide-react';
+import { bookingAPI } from '../services/api';
 
 const BookingSuccessPage = () => {
-    const location = useLocation();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const booking = location.state?.booking;
-    const seatLabels = location.state?.seatLabels;
+    const paymentId = searchParams.get('payment_id');
+
+    const [booking, setBooking] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!booking) {
+        if (!paymentId) {
             navigate('/');
+            return;
         }
-    }, [booking, navigate]);
 
-    if (!booking) {
-        return null;
+        bookingAPI.getBookingByPaymentId(paymentId)
+            .then(data => setBooking(data.booking))
+            .catch(err => setError(err?.error || 'Failed to load booking details'))
+            .finally(() => setLoading(false));
+    }, [paymentId, navigate]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
-    const seats = seatLabels?.length
-        ? seatLabels
-        : Array.isArray(booking.seats) ? booking.seats : JSON.parse(booking.seats || '[]');
-    
+    if (error) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center px-4">
+                <div className="text-center">
+                    <p className="text-destructive font-semibold mb-4">{error}</p>
+                    <button
+                        onClick={() => navigate('/bookings')}
+                        className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-semibold hover:bg-primary/90"
+                    >
+                        View My Bookings
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
@@ -39,6 +64,17 @@ const BookingSuccessPage = () => {
 
                 {/* Booking Details Card */}
                 <div className="bg-card border border-border rounded-lg p-6 mb-6">
+                    {/* Movie & Show Info */}
+                    <div className="mb-4 pb-4 border-b border-border">
+                        <p className="text-lg font-bold">{booking.movie_title}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {booking.show_date
+                                ? new Date(booking.show_date).toLocaleDateString('en-IN', { dateStyle: 'long' })
+                                : ''}
+                            {booking.start_time ? ` • ${booking.start_time.slice(0, 5)}` : ''}
+                        </p>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <p className="text-sm text-muted-foreground">Booking ID</p>
@@ -55,7 +91,7 @@ const BookingSuccessPage = () => {
                     <div className="border-t border-border pt-4 mb-4">
                         <p className="text-sm text-muted-foreground mb-3">Seats</p>
                         <div className="flex flex-wrap gap-2">
-                            {seats.map((seat, index) => (
+                            {(booking.seat_labels || []).map((seat, index) => (
                                 <span
                                     key={index}
                                     className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-semibold"
@@ -102,7 +138,6 @@ const BookingSuccessPage = () => {
                     </button>
                 </div>
 
-                {/* Download/Share Options (Optional Future Enhancement) */}
                 <div className="mt-6 text-center">
                     <p className="text-sm text-muted-foreground">
                         Need help? Contact support at support@cinema.com

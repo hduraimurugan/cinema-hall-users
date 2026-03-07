@@ -163,10 +163,7 @@ const SeatSelectionPage = () => {
             });
 
             toast.success('Payment successful! Booking confirmed.');
-            const seatLabels = selectedSeats.map(id =>
-                showData?.screen?.layout?.seats.find(s => s.id === id)?.seat_label
-            ).filter(Boolean);
-            navigate('/booking/success', { state: { booking: result.booking, seatLabels } });
+            navigate(`/booking/success?payment_id=${result.booking.payment_id}`);
         } catch (error) {
             console.error('Payment failed:', error);
             toast.error('Payment failed. Please try again.');
