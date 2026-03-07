@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Ticket, CalendarDays, Clock, MapPin, Monitor } from 'lucide-react';
 import { bookingAPI } from '../services/api';
 
@@ -9,12 +10,16 @@ const statusColors = {
 };
 
 const BookingCard = ({ booking }) => {
+  const navigate = useNavigate();
   const showDate = new Date(booking.show_date);
   const formattedDate = showDate.toLocaleDateString('en-IN', { dateStyle: 'long' });
   const formattedTime = booking.start_time ? booking.start_time.slice(0, 5) : '';
 
   return (
-    <div className="bg-card border border-border rounded-lg p-5">
+    <div
+      className="bg-card border border-border rounded-lg p-5 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+      onClick={() => navigate(`/booking/success?payment_id=${booking.payment_id}`)}
+    >
       <div className="flex items-start justify-between gap-3 mb-4 pb-4 border-b border-border">
         <div>
           <p className="text-lg font-bold">{booking.movie_title}</p>
