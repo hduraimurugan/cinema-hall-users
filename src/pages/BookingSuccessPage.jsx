@@ -1,16 +1,38 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { CheckCircle, Loader2, Download } from 'lucide-react';
 import { bookingAPI } from '../services/api';
+import { toJpeg } from 'html-to-image';
 
 const BookingSuccessPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const paymentId = searchParams.get('payment_id');
 
+    const ticketRef = useRef(null);
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const handleDownload = async () => {
+        if (!ticketRef.current) return;
+        const html = document.documentElement;
+        const wasDark = html.classList.contains('dark');
+        try {
+            if (wasDark) html.classList.remove('dark');
+            const dataUrl = await toJpeg(ticketRef.current, { quality: 0.95, pixelRatio: 2, backgroundColor: '#ffffff' });
+            if (wasDark) html.classList.add('dark');
+            const link = document.createElement('a');
+            link.download = `ticket-${booking.id?.substring(0, 8)}.jpg`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            if (wasDark) html.classList.add('dark');
+            console.error('Failed to download ticket:', err);
+        }
+    };
 
     useEffect(() => {
         if (!paymentId) {
@@ -63,7 +85,7 @@ const BookingSuccessPage = () => {
                 </div>
 
                 {/* Booking Details Card */}
-                <div className="bg-card border border-border rounded-lg p-6 mb-6">
+                <div ref={ticketRef} className="bg-card border border-border rounded-lg p-6 mb-6">
                     {/* Movie & Show Info */}
                     <div className="mb-4 pb-4 border-b border-border">
                         <p className="text-lg font-bold">{booking.movie_title}</p>
@@ -129,6 +151,13 @@ const BookingSuccessPage = () => {
                         className="flex-1 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90"
                     >
                         View My Bookings
+                    </button>
+                    <button
+                        onClick={handleDownload}
+                        className="flex-1 flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-secondary/80"
+                    >
+                        <Download className="w-4 h-4" />
+                        Download Ticket
                     </button>
                     <button
                         onClick={() => navigate('/movies')}
