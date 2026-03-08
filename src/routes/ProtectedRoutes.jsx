@@ -1,9 +1,17 @@
-// src/routes/ProtectedRoute.jsx
-import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useCustomerAuth } from '../context/CustomerAuthContext'
 
 export const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth()
-  if (!user) return <Navigate to="/login" replace />
+  const { customer, loading } = useCustomerAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!loading && !customer) {
+      navigate('/movies', { replace: true, state: { openLogin: true } })
+    }
+  }, [loading, customer, navigate])
+
+  if (loading || !customer) return null
   return children
 }

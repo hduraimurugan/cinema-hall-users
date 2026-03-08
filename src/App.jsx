@@ -11,6 +11,7 @@ import MoviesPage from './pages/MoviesPage.jsx';
 import MovieDetailsPage from './pages/MovieDetailsPage.jsx';
 import SeatSelectionPage from './pages/SeatSelectionPage.jsx';
 import BookingSuccessPage from './pages/BookingSuccessPage.jsx';
+import { ProtectedRoute } from './routes/ProtectedRoutes.jsx';
 
 function App() {
   return (
@@ -27,9 +28,9 @@ function App() {
             <Route path="/show/:showId" element={<SeatSelectionPage />} />
             <Route path="/booking/success" element={<BookingSuccessPage />} />
             <Route path="/theatres" element={<TheatresPage />} />
-            <Route path="/bookings" element={<Bookings />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
           </Route>
 

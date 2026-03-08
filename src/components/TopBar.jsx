@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Film, Search, MapPin, User, LogOut, Settings, Sun, Moon, Menu } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,16 @@ export function TopBar() {
 
     const { customer, logout, district, state, locationLoading } = useCustomerAuth()
     const { theme, toggleTheme } = useTheme()
+    const location = useLocation()
+    const navigate = useNavigate()
+
+    // Auto-open login modal when redirected from a protected route
+    useEffect(() => {
+        if (location.state?.openLogin) {
+            setLoginOpen(true)
+            navigate(location.pathname, { replace: true, state: {} })
+        }
+    }, [location.state?.openLogin])
 
     // Auto-open location modal when no location is available
     useEffect(() => {
