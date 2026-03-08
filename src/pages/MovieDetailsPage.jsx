@@ -22,7 +22,8 @@ const MovieDetailsPage = () => {
         try {
             setLoading(true);
 
-            const data = await customerMoviesAPI.getMovieDetailsWithShowtimes(movieId, district, state);
+            const dateStr = selectedDate.toISOString().split('T')[0];
+            const data = await customerMoviesAPI.getMovieDetailsWithShowtimes(movieId, district, state, dateStr);
             setMovie(data.movie);
             setCinemaHalls(data.cinema_halls || []);
         } catch (error) {

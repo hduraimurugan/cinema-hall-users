@@ -178,8 +178,10 @@ export const customerMoviesAPI = {
   },
 
   // ✅ Get movie details with cinema halls and showtimes for a location
-  getMovieDetailsWithShowtimes: async (movieId, district, state) => {
-    const queryParams = new URLSearchParams({ district, state })
+  getMovieDetailsWithShowtimes: async (movieId, district, state, date) => {
+    const params = { district, state }
+    if (date) params.date = date
+    const queryParams = new URLSearchParams(params)
     const response = await fetch(`${API_BASE_URL}/api/user/movies/${movieId}/showtimes?${queryParams}`, {
       method: "GET",
       credentials: "include",
