@@ -209,6 +209,19 @@ export const customerMoviesAPI = {
     if (!response.ok) throw new Error("Failed to fetch cinema halls")
     return response.json()
   },
+
+  // ✅ Get cinema halls with movies and shows for a location and date
+  getTheatresWithShows: async (district, state, date) => {
+    const params = { district, state }
+    if (date) params.date = date
+    const queryParams = new URLSearchParams(params)
+    const response = await fetch(`${API_BASE_URL}/api/user/movies/location/theatres?${queryParams}`, {
+      method: "GET",
+      credentials: "include",
+    })
+    if (!response.ok) throw new Error("Failed to fetch theatres")
+    return response.json()
+  },
 }
 
 // ✅ Booking API (Concurrency-safe seat booking)
