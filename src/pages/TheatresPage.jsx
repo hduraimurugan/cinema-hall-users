@@ -78,29 +78,6 @@ const TheatresPage = () => {
         );
     }
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-background">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-8">
-                    <div className="animate-pulse space-y-6">
-                        <div className="flex gap-3">
-                            {[...Array(6)].map((_, i) => (
-                                <div key={i} className="h-12 w-24 bg-secondary rounded-lg"></div>
-                            ))}
-                        </div>
-                        {[...Array(2)].map((_, i) => (
-                            <div key={i} className="bg-card border border-border rounded-lg p-6 space-y-4">
-                                <div className="h-6 bg-secondary rounded w-1/4"></div>
-                                <div className="h-4 bg-secondary rounded w-1/3"></div>
-                                <div className="h-24 bg-secondary rounded"></div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-background">
             <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-6">
@@ -128,7 +105,17 @@ const TheatresPage = () => {
                 </div>
 
                 {/* Cinema Halls */}
-                {cinemaHalls.length === 0 ? (
+                {loading ? (
+                    <div className="animate-pulse space-y-6">
+                        {[...Array(2)].map((_, i) => (
+                            <div key={i} className="bg-card border border-border rounded-lg p-6 space-y-4">
+                                <div className="h-6 bg-secondary rounded w-1/4"></div>
+                                <div className="h-4 bg-secondary rounded w-1/3"></div>
+                                <div className="h-24 bg-secondary rounded"></div>
+                            </div>
+                        ))}
+                    </div>
+                ) : cinemaHalls.length === 0 ? (
                     <div className="bg-card border border-border rounded-lg p-12 text-center">
                         <svg className="w-12 h-12 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
