@@ -44,7 +44,7 @@ const TheatresPage = () => {
 
     const getNextDates = () => {
         const dates = [];
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 7; i++) {
             const date = new Date();
             date.setDate(date.getDate() + i);
             dates.push(date);
@@ -52,15 +52,17 @@ const TheatresPage = () => {
         return dates;
     };
 
-    const formatDateLabel = (date) => {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+    const formatDateParts = (date) => ({
+        dow: date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+        day: date.getDate(),
+        month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+    });
 
-        if (date.toDateString() === today.toDateString()) return 'Today';
-        if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
-
-        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const formatDuration = (mins) => {
+        if (!mins) return '';
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
     };
 
     if (!district || !state) {
@@ -80,86 +82,162 @@ const TheatresPage = () => {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-6">
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold mb-1">Theatres</h1>
-                    <p className="text-muted-foreground text-sm">{district}, {state}</p>
-                </div>
 
-                {/* Date Selector */}
-                <div className="mb-8">
-                    <div className="flex gap-3 overflow-x-auto pb-2">
-                        {getNextDates().map((date, index) => (
-                            <button
-                                key={index}
-                                onClick={() => setSelectedDate(date)}
-                                className={`px-6 py-3 rounded-lg whitespace-nowrap transition ${date.toDateString() === selectedDate.toDateString()
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                                    }`}
-                            >
-                                {formatDateLabel(date)}
-                            </button>
-                        ))}
+            {/* Page Header */}
+            <div className="container mx-auto px-4 sm:px-6 lg:px-14 pt-6 pb-4">
+                <h1 className="text-3xl font-bold">Theatres</h1>
+                <p className="text-sm text-muted-foreground mt-1">{district}, {state}</p>
+            </div>
+
+            {/* Date Selector */}
+            <div className="bg-card border-b border-border">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-14">
+                    <div className="flex items-center gap-4 py-3">
+                        <div className="flex gap-2 overflow-x-auto pb-1 flex-1 min-w-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            {getNextDates().map((date, index) => {
+                                const { dow, day, month } = formatDateParts(date);
+                                const isSelected = date.toDateString() === selectedDate.toDateString();
+                                return (
+                                    <button
+                                        key={index}
+                                        onClick={() => setSelectedDate(date)}
+                                        className={`flex-shrink-0 flex flex-col items-center justify-center w-14 py-2 rounded-lg transition-all duration-200 ${
+                                            isSelected
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'border border-border text-foreground hover:border-primary hover:text-primary'
+                                        }`}
+                                    >
+                                        <span className="text-[10px] font-semibold tracking-wider leading-none">{dow}</span>
+                                        <span className="text-xl font-bold leading-tight">{day}</span>
+                                        <span className="text-[10px] font-semibold tracking-wider leading-none">{month}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Cinema Halls */}
+            {/* Availability Legend */}
+            <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-2">
+                <div className="flex items-center justify-end gap-4 text-xs font-semibold tracking-wide">
+                    <span className="flex items-center gap-1.5 text-green-600 dark:text-green-500">
+                        <span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                        AVAILABLE
+                    </span>
+                    <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                        FAST FILLING
+                    </span>
+                </div>
+            </div>
+
+            {/* Cinema Halls */}
+            <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-3 pb-10">
                 {loading ? (
-                    <div className="animate-pulse space-y-6">
-                        {[...Array(2)].map((_, i) => (
-                            <div key={i} className="bg-card border border-border rounded-lg p-6 space-y-4">
-                                <div className="h-6 bg-secondary rounded w-1/4"></div>
-                                <div className="h-4 bg-secondary rounded w-1/3"></div>
-                                <div className="h-24 bg-secondary rounded"></div>
+                    <div className="animate-pulse space-y-4">
+                        {[1, 2].map((i) => (
+                            <div key={i} className="bg-card border border-border rounded-xl p-5 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-5 w-5 bg-muted rounded"></div>
+                                        <div>
+                                            <div className="h-4 bg-muted rounded w-40 mb-1"></div>
+                                            <div className="h-3 bg-muted rounded w-28"></div>
+                                        </div>
+                                    </div>
+                                    <div className="h-5 w-5 bg-muted rounded-full"></div>
+                                </div>
+                                <div className="border-t border-border pt-4 space-y-4">
+                                    {[1, 2].map((j) => (
+                                        <div key={j} className="flex gap-4">
+                                            <div className="w-14 h-20 bg-muted rounded-lg flex-shrink-0"></div>
+                                            <div className="flex-1 space-y-2">
+                                                <div className="h-4 bg-muted rounded w-1/3"></div>
+                                                <div className="h-3 bg-muted rounded w-1/4"></div>
+                                                <div className="flex gap-2 pt-1">
+                                                    <div className="h-12 w-20 bg-muted rounded-lg"></div>
+                                                    <div className="h-12 w-20 bg-muted rounded-lg"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         ))}
                     </div>
                 ) : cinemaHalls.length === 0 ? (
-                    <div className="bg-card border border-border rounded-lg p-12 text-center">
-                        <svg className="w-12 h-12 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-card border border-border rounded-xl p-10 text-center">
+                        <svg className="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                         </svg>
-                        <p className="text-muted-foreground text-lg">No shows available for this date in {district}</p>
+                        <p className="text-muted-foreground font-medium">No shows available for this date in {district}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Try selecting a different date</p>
                     </div>
                 ) : (
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         {cinemaHalls.map((hall) => (
-                            <div key={hall.hall_id} className="bg-card border border-border rounded-lg overflow-hidden">
+                            <div key={hall.hall_id} className="bg-card border border-border rounded-xl overflow-hidden">
+
                                 {/* Hall Header */}
-                                <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-                                    <svg className="w-5 h-5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                                    </svg>
-                                    <div>
-                                        <h2 className="text-lg font-semibold">{hall.hall_name}</h2>
-                                        <p className="text-sm text-muted-foreground">{hall.location}</p>
+                                <div className="px-5 py-4 flex items-start justify-between">
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-4 8h4" />
+                                        </svg>
+                                        <div>
+                                            <h2 className="font-bold text-base text-foreground leading-tight">{hall.hall_name}</h2>
+                                            <p className="text-xs text-muted-foreground mt-0.5">{hall.location}</p>
+                                        </div>
                                     </div>
+                                    <button
+                                        className="p-1 text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
+                                        aria-label="Add to favourites"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                    </button>
                                 </div>
 
                                 {/* Movies in this hall */}
                                 <div className="divide-y divide-border">
                                     {hall.movies.map((movie) => (
-                                        <div key={movie.movie_id} className="p-6">
+                                        <div key={movie.movie_id} className="px-5 py-4">
                                             <div className="flex gap-4">
-                                                {/* Poster thumbnail */}
-                                                <img
-                                                    src={movie.poster_url}
-                                                    alt={movie.title}
-                                                    className="w-16 h-24 object-cover rounded shrink-0"
-                                                />
+
+                                                {/* Poster */}
+                                                <div
+                                                    className="flex-shrink-0 w-14 cursor-pointer"
+                                                    onClick={() => navigate(`/movie/${movie.movie_id}`)}
+                                                >
+                                                    <img
+                                                        src={movie.poster_url}
+                                                        alt={movie.title}
+                                                        className="w-full rounded-lg object-cover aspect-[2/3] shadow-md"
+                                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                    />
+                                                </div>
 
                                                 {/* Movie info + showtimes */}
                                                 <div className="flex-1 min-w-0">
-                                                    <h3 className="font-semibold text-base mb-1">{movie.title}</h3>
+                                                    <h3
+                                                        className="font-semibold text-sm mb-1 cursor-pointer hover:text-primary transition-colors"
+                                                        onClick={() => navigate(`/movie/${movie.movie_id}`)}
+                                                    >
+                                                        {movie.title}
+                                                    </h3>
 
-                                                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-3">
-                                                        <span className="flex items-center gap-1">
-                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                            {movie.duration_mins} mins
-                                                        </span>
+                                                    {/* Duration + genres */}
+                                                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mb-3">
+                                                        {movie.duration_mins && (
+                                                            <span className="flex items-center gap-1">
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                {formatDuration(movie.duration_mins)}
+                                                            </span>
+                                                        )}
                                                         {movie.genre?.slice(0, 2).map((g, i) => (
                                                             <span key={i} className="px-2 py-0.5 bg-secondary rounded-full">{g}</span>
                                                         ))}
@@ -174,27 +252,34 @@ const TheatresPage = () => {
                                                                 return acc;
                                                             }, {})
                                                         ).map(([screenName, shows]) => (
-                                                            <div key={screenName} className="flex items-center gap-3 flex-wrap">
-                                                                <span className="text-xs text-muted-foreground w-20 shrink-0">{screenName}</span>
+                                                            <div key={screenName} className="flex items-start gap-3 flex-wrap">
+                                                                <span className="text-xs text-muted-foreground w-24 shrink-0 pt-2.5">{screenName}</span>
                                                                 <div className="flex flex-wrap gap-2">
-                                                                    {shows.map((show) => (
-                                                                        <button
-                                                                            key={show.show_id}
-                                                                            onClick={() => navigate(`/show/${show.show_id}`)}
-                                                                            className="px-4 py-2 bg-secondary hover:bg-primary hover:text-primary-foreground rounded-lg transition text-sm font-medium"
-                                                                        >
-                                                                            {formatTime(show.start_time)}
-                                                                            {show.language_version && (
-                                                                                <span className="ml-1.5 text-xs opacity-75">
-                                                                                    ({show.language_version})
+                                                                    {[...shows]
+                                                                        .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                                                                        .map((show) => (
+                                                                            <button
+                                                                                key={show.show_id}
+                                                                                onClick={() => navigate(`/show/${show.show_id}`)}
+                                                                                className="flex flex-col items-center justify-center px-3 py-2 min-w-[76px] border border-green-500 rounded-lg text-green-700 dark:text-green-400 hover:border-primary hover:text-primary transition-colors duration-150"
+                                                                            >
+                                                                                <span className="font-bold text-xs leading-tight">
+                                                                                    {show.start_time ? formatTime(show.start_time) : '--:--'}
                                                                                 </span>
-                                                                            )}
-                                                                        </button>
-                                                                    ))}
+                                                                                {show.language_version && (
+                                                                                    <span className="text-[10px] text-muted-foreground leading-tight mt-0.5 max-w-[68px] truncate">
+                                                                                        {show.language_version}
+                                                                                    </span>
+                                                                                )}
+                                                                            </button>
+                                                                        ))
+                                                                    }
                                                                 </div>
                                                             </div>
                                                         ))}
                                                     </div>
+
+                                                    <p className="text-[10px] text-muted-foreground mt-2">Non-cancellable</p>
                                                 </div>
                                             </div>
                                         </div>
