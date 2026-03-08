@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Ticket, CalendarDays, Clock, MapPin, Monitor } from 'lucide-react';
+import { Ticket, CalendarDays, Clock, MapPin, Monitor, QrCode } from 'lucide-react';
 import { bookingAPI } from '../services/api';
+import { QRCodeSVG } from 'qrcode.react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const statusColors = {
   confirmed: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
@@ -69,7 +71,36 @@ const BookingCard = ({ booking }) => {
           <p className="text-xs text-muted-foreground">Booking ID</p>
           <p className="text-sm font-mono font-semibold">{booking.id?.substring(0, 8)}</p>
         </div>
-        <p className="text-xl font-bold">₹{booking.total_amount}</p>
+        <div className="flex items-center gap-3">
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                onClick={e => e.stopPropagation()}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                Show QR
+              </button>
+            </DialogTrigger>
+            <DialogContent onClick={e => e.stopPropagation()} className="max-w-xs">
+              <DialogHeader>
+                <DialogTitle>Ticket QR Code</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center gap-3 py-4">
+                <div className="bg-white p-3 rounded-lg">
+                  <QRCodeSVG value={booking.id} size={180} />
+                </div>
+                <p className="text-sm font-semibold">{booking.movie_title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(booking.show_date).toLocaleDateString('en-IN', { dateStyle: 'long' })}
+                  {booking.start_time ? ` • ${booking.start_time.slice(0, 5)}` : ''}
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">{booking.id}</p>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <p className="text-xl font-bold">₹{booking.total_amount}</p>
+        </div>
       </div>
     </div>
   );

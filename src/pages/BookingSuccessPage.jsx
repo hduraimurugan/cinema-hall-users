@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CheckCircle, Loader2, Download } from 'lucide-react';
 import { bookingAPI } from '../services/api';
 import { toJpeg } from 'html-to-image';
+import { QRCodeSVG } from 'qrcode.react';
 
 const BookingSuccessPage = () => {
     const [searchParams] = useSearchParams();
@@ -134,6 +135,13 @@ const BookingSuccessPage = () => {
                                 Payment ID: {booking.payment_id}
                             </p>
                         )}
+                    </div>
+
+                    <div className="border-t border-border pt-4 flex flex-col items-center">
+                        <div className="bg-white p-2 rounded">
+                            <QRCodeSVG value={booking.id} size={120} />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Scan to verify</p>
                     </div>
                 </div>
 
