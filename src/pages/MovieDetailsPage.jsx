@@ -12,6 +12,7 @@ const MovieDetailsPage = () => {
     const [movie, setMovie] = useState(null);
     const [cinemaHalls, setCinemaHalls] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refetching, setRefetching] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
 
     useEffect(() => {
@@ -20,7 +21,11 @@ const MovieDetailsPage = () => {
 
     const fetchMovieShowtimes = async () => {
         try {
-            setLoading(true);
+            if (movie) {
+                setRefetching(true);
+            } else {
+                setLoading(true);
+            }
 
             const dateStr = selectedDate.toISOString().split('T')[0];
             const data = await customerMoviesAPI.getMovieDetailsWithShowtimes(movieId, district, state, dateStr);
@@ -31,6 +36,7 @@ const MovieDetailsPage = () => {
             toast.error('Failed to load showtimes');
         } finally {
             setLoading(false);
+            setRefetching(false);
         }
     };
 
@@ -167,7 +173,20 @@ const MovieDetailsPage = () => {
             <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-6">
                 <h2 className="text-2xl font-bold mb-6">Select Cinema & Show Time</h2>
 
-                {cinemaHalls.length === 0 ? (
+                {refetching ? (
+                    <div className="space-y-4 animate-pulse">
+                        {[1, 2].map((i) => (
+                            <div key={i} className="bg-card border border-border rounded-lg p-6">
+                                <div className="h-6 bg-gray-200 rounded w-1/3 mb-3"></div>
+                                <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+                                <div className="flex gap-3">
+                                    <div className="h-10 bg-gray-200 rounded w-24"></div>
+                                    <div className="h-10 bg-gray-200 rounded w-24"></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : cinemaHalls.length === 0 ? (
                     <div className="bg-card border border-border rounded-lg p-8 text-center">
                         <p className="text-muted-foreground">No shows available for this date</p>
                     </div>
