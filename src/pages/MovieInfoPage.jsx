@@ -197,7 +197,7 @@ const MovieInfoPage = () => {
                         {/* Book Tickets CTA */}
                         <button
                             onClick={() => navigate(`/movie/shows/${movieId}`)}
-                            className="px-8 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors text-base shadow-lg"
+                            className="px-8 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors text-base shadow-lg cursor-pointer"
                         >
                             Book Tickets
                         </button>
