@@ -9,6 +9,7 @@ import { SettingsPage } from './pages/SettingsPage.jsx';
 import TheatresPage from './pages/TheatresPage.jsx';
 import MoviesPage from './pages/MoviesPage.jsx';
 import MovieDetailsPage from './pages/MovieDetailsPage.jsx';
+import MovieInfoPage from './pages/MovieInfoPage.jsx';
 import SeatSelectionPage from './pages/SeatSelectionPage.jsx';
 import BookingSuccessPage from './pages/BookingSuccessPage.jsx';
 import { ProtectedRoute } from './routes/ProtectedRoutes.jsx';
@@ -24,7 +25,8 @@ function App() {
 
             {/* <Route path="/" element={<HomePage />} /> */}
             <Route path="/movies" element={<MoviesPage />} />
-            <Route path="/movie/:movieId" element={<MovieDetailsPage />} />
+            <Route path="/movie/:movieId" element={<MovieInfoPage />} />
+            <Route path="/movie/shows/:movieId" element={<MovieDetailsPage />} />
             <Route path="/show/:showId" element={<SeatSelectionPage />} />
             <Route path="/booking/success" element={<BookingSuccessPage />} />
             <Route path="/theatres" element={<TheatresPage />} />

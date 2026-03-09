@@ -125,7 +125,7 @@ const MovieDetailsPage = () => {
                 {/* Back button */}
                 <div className="absolute top-4 left-4 sm:left-6 lg:left-14 z-10">
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate(`/movie/${movieId}`)}
                         className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition bg-background/50 backdrop-blur-sm rounded-full px-3 py-1.5 text-sm"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
