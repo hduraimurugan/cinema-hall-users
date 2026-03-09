@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { showsAPI, bookingAPI } from '../services/api';
 import { useRazorpayPayment } from '../hooks/useRazorpayPayment';
@@ -211,6 +211,9 @@ const SeatSelectionPage = () => {
     const renderSeatSection = (seats, sectionTitle, price) => {
         if (!seats.length) return null;
 
+        const aisleAfterColumns = showData?.screen?.layout?.aisleAfterColumns || [];
+        const aisleAfterRows = showData?.screen?.layout?.aisleAfterRows || [];
+
         // Group seats by row
         const seatsByRow = seats.reduce((acc, seat) => {
             const row = seat.seat_label?.charAt(0) || 'A';
@@ -228,32 +231,45 @@ const SeatSelectionPage = () => {
                     <p className="text-sm text-muted-foreground">₹{price}</p>
                 </div>
                 <div className="space-y-2">
-                    {sortedRows.map(row => (
-                        <div key={row} className="flex items-center justify-center gap-1">
-                            <div className="w-8 text-center text-sm font-medium mr-2">{row}</div>
-                            {seatsByRow[row]
-                                .sort((a, b) => {
-                                    const aNum = parseInt(a.seat_label?.slice(1) || '0');
-                                    const bNum = parseInt(b.seat_label?.slice(1) || '0');
-                                    return aNum - bNum;
-                                })
-                                .map((seat, index) => (
-                                    <button
-                                        key={seat.id}
-                                        onClick={() => toggleSeat(seat)}
-                                        disabled={seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD' || holdExpiry}
-                                        className={`
-                      w-8 h-8 text-xs font-medium rounded transition-all duration-200 transform
-                      ${getSeatColor(seat)}
-                      ${(seat.status === 'available' || seat.status === 'AVAILABLE') && !holdExpiry ? 'hover:scale-105' : ''}
-                      ${selectedSeats.includes(seat.id) ? 'ring-1 ring-green-400' : ''}
-                    `}
-                                        title={`${seat.seat_label} - ₹${price}`}
-                                    >
-                                        {seat.seat_label?.slice(1) || index + 1}
-                                    </button>
-                                ))}
-                        </div>
+                    {sortedRows.map((row, rowIdx) => (
+                        <React.Fragment key={row}>
+                            <div className="flex items-center justify-center gap-1">
+                                <div className="w-8 text-center text-sm font-medium mr-2">{row}</div>
+                                {seatsByRow[row]
+                                    .sort((a, b) => {
+                                        const aNum = parseInt(a.seat_label?.slice(1) || '0');
+                                        const bNum = parseInt(b.seat_label?.slice(1) || '0');
+                                        return aNum - bNum;
+                                    })
+                                    .map((seat, index) => {
+                                        const colNum = parseInt(seat.seat_label?.slice(1) || '0');
+                                        const hasAisleAfterCol = aisleAfterColumns.includes(colNum);
+                                        return (
+                                            <React.Fragment key={seat.id}>
+                                                <button
+                                                    onClick={() => toggleSeat(seat)}
+                                                    disabled={seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD' || holdExpiry}
+                                                    className={`
+                                                        w-8 h-8 text-xs font-medium rounded transition-all duration-200 transform
+                                                        ${getSeatColor(seat)}
+                                                        ${(seat.status === 'available' || seat.status === 'AVAILABLE') && !holdExpiry ? 'hover:scale-105' : ''}
+                                                        ${selectedSeats.includes(seat.id) ? 'ring-1 ring-green-400' : ''}
+                                                    `}
+                                                    title={`${seat.seat_label} - ₹${price}`}
+                                                >
+                                                    {seat.seat_label?.slice(1) || index + 1}
+                                                </button>
+                                                {hasAisleAfterCol && (
+                                                    <div className="w-3" aria-hidden="true" />
+                                                )}
+                                            </React.Fragment>
+                                        );
+                                    })}
+                            </div>
+                            {aisleAfterRows.includes(row) && (
+                                <div className="h-3" aria-hidden="true" />
+                            )}
+                        </React.Fragment>
                     ))}
                 </div>
             </div>
