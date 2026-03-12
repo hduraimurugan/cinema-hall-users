@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Film, Search, MapPin, User, LogOut, Settings, Sun, Moon, Menu } from 'lucide-react'
+import { Film, Bell, Search, MapPin, User, LogOut, Settings, Sun, Moon, Menu } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -16,6 +16,13 @@ import { useCustomerAuth } from "../context/CustomerAuthContext"
 import { useTheme } from "../context/ThemeContext"
 import { LoginModal } from "./LoginModal"
 import { LocationModal } from "./LocationModal"
+
+// Mock notifications
+const mockNotifications = [
+    { id: 1, title: "New booking received", time: "2 min ago", type: "booking" },
+    { id: 2, title: "Screen 3 maintenance due", time: "1 hour ago", type: "maintenance" },
+    { id: 3, title: "Revenue target achieved", time: "3 hours ago", type: "success" },
+]
 
 export function TopBar() {
     const [searchValue, setSearchValue] = useState("")
@@ -109,6 +116,50 @@ export function TopBar() {
                             </div>
                         </Button>
 
+                        {/* Notifications */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="relative rounded-full hover:bg-primary/10 transition-all duration-200"
+                                >
+                                    <Bell className="h-5 w-5" />
+                                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary animate-pulse">
+                                        <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-75"></span>
+                                    </span>
+                                    <span className="sr-only">Notifications</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-80">
+                                <DropdownMenuLabel className="font-normal">
+                                    <div className="flex flex-col space-y-1">
+                                        <p className="text-sm font-medium">Notifications</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            You have {mockNotifications.length} unread notifications
+                                        </p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <div className="max-h-64 overflow-y-auto">
+                                    {mockNotifications.map((notification) => (
+                                        <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-3 cursor-pointer">
+                                            <div className="flex w-full items-start justify-between">
+                                                <p className="text-sm font-medium">{notification.title}</p>
+                                                <span className="text-xs text-muted-foreground">{notification.time}</span>
+                                            </div>
+                                        </DropdownMenuItem>
+                                    ))}
+                                </div>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <Link to="/notifications" className="w-full text-center">
+                                        View all notifications
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
                         {/* customer or Sign In */}
                         {customer ? (
                             <DropdownMenu>
@@ -116,7 +167,7 @@ export function TopBar() {
                                     <Button variant="ghost" className="flex items-center gap-2">
                                         <Avatar className="h-8 w-8">
                                             <AvatarFallback className="bg-primary text-primary-foreground">
-                                                {customer.name?.charAt(0) || 'U'}
+                                                {customer?.name?.charAt(0) || 'U'}
                                             </AvatarFallback>
                                         </Avatar>
                                     </Button>
@@ -131,7 +182,7 @@ export function TopBar() {
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
                                         <Link to="/profile" className="flex items-center gap-2">
-                                            <customer className="h-4 w-4" />
+                                            <User className="h-4 w-4" />
                                             Profile
                                         </Link>
                                     </DropdownMenuItem>
