@@ -164,16 +164,19 @@ export function TopBar() {
                         {customer ? (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="flex items-center gap-2">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarFallback className="bg-primary text-primary-foreground">
+                                    <Button
+                                        variant="ghost"
+                                        className="relative h-9 w-9 rounded-full hover:bg-primary/10 transition-all duration-200"
+                                    >
+                                        <Avatar className="h-9 w-9 border-2 border-primary/20">
+                                            <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
                                                 {customer?.name?.charAt(0) || 'U'}
                                             </AvatarFallback>
                                         </Avatar>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56">
-                                    <DropdownMenuLabel>
+                                    <DropdownMenuLabel className="font-normal">
                                         <div className="flex flex-col space-y-1">
                                             <p className="text-sm font-medium">{customer.name}</p>
                                             <p className="text-xs text-muted-foreground">{customer.email}</p>
@@ -181,19 +184,22 @@ export function TopBar() {
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
-                                        <Link to="/profile" className="flex items-center gap-2">
+                                        <Link to="/profile" className="flex cursor-pointer items-center gap-2">
                                             <User className="h-4 w-4" />
                                             Profile
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link to="/settings" className="flex items-center gap-2">
+                                        <Link to="/settings" className="flex cursor-pointer items-center gap-2">
                                             <Settings className="h-4 w-4" />
                                             Settings
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={logout} className="flex items-center gap-2 text-destructive focus:text-destructive">
+                                    <DropdownMenuItem
+                                        className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
+                                        onClick={logout}
+                                    >
                                         <LogOut className="h-4 w-4" />
                                         Logout
                                     </DropdownMenuItem>
