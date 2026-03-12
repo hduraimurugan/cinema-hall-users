@@ -231,7 +231,7 @@ const SeatSelectionPage = () => {
                     <p className="text-sm text-muted-foreground">₹{price}</p>
                 </div>
                 <div className="space-y-2">
-                    {sortedRows.map((row, rowIdx) => (
+                    {sortedRows.map((row) => (
                         <React.Fragment key={row}>
                             <div className="flex items-center justify-center gap-1">
                                 <div className="w-8 text-center text-sm font-medium mr-2">{row}</div>
@@ -382,53 +382,37 @@ const SeatSelectionPage = () => {
                         </div>
                     </div>
 
-                    {/* Seat Layout by Category */}
-                    <div className="space-y-8">
-                        {/* Premium Seats */}
-                        {renderSeatSection(
-                            categorizedSeats.premium,
-                            'PREMIUM',
-                            getSeatPrice('premium')
-                        )}
-
-                        {/* Passage Space */}
-                        {categorizedSeats.premium.length > 0 && categorizedSeats.gold.length > 0 && (
-                            <div className="h-4"></div>
-                        )}
-
-                        {/* Gold Seats */}
-                        {renderSeatSection(
-                            categorizedSeats.gold,
-                            'GOLD',
-                            getSeatPrice('gold')
-                        )}
-
-                        {/* Passage Space */}
-                        {categorizedSeats.gold.length > 0 && categorizedSeats.silver.length > 0 && (
-                            <div className="h-4"></div>
-                        )}
-
-                        {/* Silver Seats */}
-                        {renderSeatSection(
-                            categorizedSeats.silver,
-                            'SILVER',
-                            getSeatPrice('silver')
-                        )}
-                    </div>
-
-                    {/* Screen Indicator */}
-                    <div className="mt-12 mb-4">
-                        <div className="relative">
-                            <div className="h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full mb-2"></div>
-                            <div className="text-center">
-                                <div className="inline-block bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full">
-                                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400 tracking-wider">
-                                        SCREEN THIS WAY
-                                    </span>
+                    {(() => {
+                        const screenPosition = showData?.screen?.layout?.screenPosition || 'bottom';
+                        const screenIndicator = (
+                            <div className="my-6">
+                                <div className="relative">
+                                    <div className="h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full mb-2"></div>
+                                    <div className="text-center">
+                                        <div className="inline-block bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full">
+                                            <span className="text-xs font-medium text-blue-600 dark:text-blue-400 tracking-wider">
+                                                SCREEN THIS WAY
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        );
+                        const seatLayout = (
+                            <div className="space-y-8">
+                                {renderSeatSection(categorizedSeats.premium, 'PREMIUM', getSeatPrice('premium'))}
+                                {categorizedSeats.premium.length > 0 && categorizedSeats.gold.length > 0 && <div className="h-4"></div>}
+                                {renderSeatSection(categorizedSeats.gold, 'GOLD', getSeatPrice('gold'))}
+                                {categorizedSeats.gold.length > 0 && categorizedSeats.silver.length > 0 && <div className="h-4"></div>}
+                                {renderSeatSection(categorizedSeats.silver, 'SILVER', getSeatPrice('silver'))}
+                            </div>
+                        );
+                        return screenPosition === 'top' ? (
+                            <>{screenIndicator}{seatLayout}</>
+                        ) : (
+                            <>{seatLayout}{screenIndicator}</>
+                        );
+                    })()}
                 </div>
             </div>
 
