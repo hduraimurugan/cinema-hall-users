@@ -213,10 +213,8 @@ export function TopBar() {
 
                         {/* Mobile Dropdown for Theme, Location, and Login */}
                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="sm:hidden">
-                                    <Menu className="h-5 w-5" />
-                                </Button>
+                            <DropdownMenuTrigger className="sm:hidden inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                <Menu className="h-5 w-5" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={toggleTheme}>
@@ -232,7 +230,7 @@ export function TopBar() {
                                         </>
                                     )}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setLocationOpen(true)}>
+                                <DropdownMenuItem onClick={() => setTimeout(() => setLocationOpen(true), 0)}>
                                     <MapPin className="mr-2 h-4 w-4 text-primary" />
                                     <div className="flex items-center gap-1.5">
                                         <span className="font-medium">{district || "Select Location"}</span>
@@ -245,7 +243,7 @@ export function TopBar() {
                                     </div>
                                 </DropdownMenuItem>
                                 {!customer && (
-                                    <DropdownMenuItem onClick={() => setLoginOpen(true)}>
+                                    <DropdownMenuItem onClick={() => setTimeout(() => setLoginOpen(true), 0)}>
                                         <User className="mr-2 h-4 w-4" />
                                         Sign In
                                     </DropdownMenuItem>
