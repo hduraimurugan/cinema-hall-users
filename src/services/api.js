@@ -308,6 +308,26 @@ export const paymentAPI = {
   }
 };
 
+// ✅ Ads API (Get active ads + record clicks)
+export const adsAPI = {
+  getActive: async (placement) => {
+    const response = await fetch(`${API_BASE_URL}/api/ads/active?placement=${placement}`, {
+      credentials: 'include',
+    })
+    if (!response.ok) throw new Error('Failed to fetch ads')
+    return response.json()
+  },
+
+  recordClick: async (adId) => {
+    const response = await fetch(`${API_BASE_URL}/api/ads/click/${adId}`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    if (!response.ok) throw new Error('Failed to record click')
+    return response.json()
+  },
+}
+
 // ✅ Shows API (Get show details with seat layout)
 export const showsAPI = {
   // Get show details with seat layout

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { customerMoviesAPI } from '../services/api';
+import { customerMoviesAPI, adsAPI } from '../services/api';
 
 const getYouTubeEmbedUrl = (url) => {
     if (!url) return null;
@@ -23,6 +23,7 @@ const MovieInfoPage = () => {
     const [movie, setMovie] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [sideAds, setSideAds] = useState([]);
 
     useEffect(() => {
         const fetchMovie = async () => {
@@ -39,6 +40,10 @@ const MovieInfoPage = () => {
         };
         fetchMovie();
     }, [movieId]);
+
+    useEffect(() => {
+        adsAPI.getActive('side').then((data) => setSideAds(data.ads)).catch(() => {});
+    }, []);
 
     const formatDuration = (mins) => {
         if (!mins) return '';
@@ -58,6 +63,11 @@ const MovieInfoPage = () => {
 
     const scrollToTrailer = () => {
         trailerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const handleAdClick = (ad) => {
+        adsAPI.recordClick(ad.id).catch(() => {});
+        if (ad.click_url) window.open(ad.click_url, '_blank', 'noopener,noreferrer');
     };
 
     if (loading) {
@@ -89,6 +99,7 @@ const MovieInfoPage = () => {
     }
 
     const embedUrl = getYouTubeEmbedUrl(movie.trailer_url);
+    const hasSideAds = sideAds.length > 0;
 
     return (
         <div className="min-h-screen bg-background">
@@ -205,33 +216,60 @@ const MovieInfoPage = () => {
                 </div>
             </div>
 
-            {/* About the Movie Section */}
-            {movie.description && (
-                <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-8 border-b border-border">
-                    <h2 className="text-lg font-bold text-foreground mb-3">About the movie</h2>
-                    <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
-                        {movie.description}
-                    </p>
-                </div>
-            )}
+            {/* Content area: main content + optional side ad column */}
+            <div className={`container mx-auto px-4 sm:px-6 lg:px-14 ${hasSideAds ? 'flex gap-8 items-start' : ''}`}>
 
-            {/* Trailer Section */}
-            {embedUrl && (
-                <div ref={trailerRef} className="container mx-auto px-4 sm:px-6 lg:px-14 py-8">
-                    <h2 className="text-lg font-bold text-foreground mb-4">Trailer</h2>
-                    <div className="max-w-3xl">
-                        <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-2xl">
-                            <iframe
-                                src={embedUrl}
-                                title={`${movie.title} Trailer`}
-                                className="absolute inset-0 w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                            />
+                {/* Main content */}
+                <div className="flex-1 min-w-0">
+                    {/* About the Movie Section */}
+                    {movie.description && (
+                        <div className="py-8 border-b border-border">
+                            <h2 className="text-lg font-bold text-foreground mb-3">About the movie</h2>
+                            <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
+                                {movie.description}
+                            </p>
                         </div>
-                    </div>
+                    )}
+
+                    {/* Trailer Section */}
+                    {embedUrl && (
+                        <div ref={trailerRef} className="py-8">
+                            <h2 className="text-lg font-bold text-foreground mb-4">Trailer</h2>
+                            <div className="max-w-3xl">
+                                <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-2xl">
+                                    <iframe
+                                        src={embedUrl}
+                                        title={`${movie.title} Trailer`}
+                                        className="absolute inset-0 w-full h-full"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
+
+                {/* Side ads — only on md+ screens */}
+                {hasSideAds && (
+                    <div className="hidden md:flex flex-col gap-4 w-44 lg:w-48 shrink-0 sticky top-24 pt-8">
+                        {sideAds.map((ad) => (
+                            <div
+                                key={ad.id}
+                                onClick={() => handleAdClick(ad)}
+                                className={`rounded-lg overflow-hidden border border-border shadow-sm ${ad.click_url ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+                            >
+                                <img
+                                    src={ad.image_url}
+                                    alt={ad.title}
+                                    className="w-full h-auto object-cover"
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
