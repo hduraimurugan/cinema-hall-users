@@ -7,16 +7,6 @@ import { toast } from 'sonner';
 
 const CONVENIENCE_FEE_PER_TICKET = 15;
 
-const PaymentOption = ({ icon, label, selected, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-3.5 text-left border-b border-border transition-colors ${selected ? 'bg-red-50 dark:bg-red-950/20 border-l-4 border-l-red-600' : 'hover:bg-secondary/50'}`}
-    >
-        <span className="text-xl">{icon}</span>
-        <span className={`text-sm font-medium ${selected ? 'text-red-600' : ''}`}>{label}</span>
-    </button>
-);
-
 const OrderSummaryPage = () => {
     const navigate = useNavigate();
     const { state } = useLocation();
@@ -25,24 +15,17 @@ const OrderSummaryPage = () => {
 
     const [timeLeft, setTimeLeft] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [selectedPayment, setSelectedPayment] = useState('upi');
 
-    // Redirect if no state (direct URL access)
     useEffect(() => {
-        if (!state?.showId) {
-            navigate('/movies', { replace: true });
-        }
+        if (!state?.showId) navigate('/movies', { replace: true });
     }, [state, navigate]);
 
-    // Countdown timer
     useEffect(() => {
         if (!state?.holdExpiry) return;
-
         const interval = setInterval(() => {
             const diff = new Date(state.holdExpiry) - new Date();
             if (diff <= 0) {
                 clearInterval(interval);
-                setTimeLeft(null);
                 toast.error('Seat hold expired. Please select again.');
                 navigate(`/show/${state.showId}`, { replace: true });
             } else {
@@ -51,15 +34,14 @@ const OrderSummaryPage = () => {
                 setTimeLeft(`${minutes}:${seconds.toString().padStart(2, '0')}`);
             }
         }, 1000);
-
         return () => clearInterval(interval);
     }, [state?.holdExpiry, navigate, state?.showId]);
 
     const handleCancel = async () => {
         try {
             await bookingAPI.releaseSeats(state.showId, state.selectedSeats);
-        } catch (_) {
-            // Silently ignore release errors
+        } catch (error) {
+            console.error('Failed to release seats:', error);
         }
         navigate(`/show/${state.showId}`, { replace: true });
     };
@@ -69,10 +51,7 @@ const OrderSummaryPage = () => {
             toast.error('Please login to continue');
             return;
         }
-
-        const convenienceFees = state.selectedSeats.length * CONVENIENCE_FEE_PER_TICKET;
-        const grandTotal = state.totalAmount + convenienceFees;
-
+        const grandTotal = state.totalAmount + state.selectedSeats.length * CONVENIENCE_FEE_PER_TICKET;
         try {
             setIsProcessing(true);
             const result = await initiatePayment({
@@ -99,16 +78,7 @@ const OrderSummaryPage = () => {
 
     const convenienceFees = state.selectedSeats.length * CONVENIENCE_FEE_PER_TICKET;
     const grandTotal = state.totalAmount + convenienceFees;
-
-    // Group seats by category label (derived from seatLabels — all same type for simplicity)
     const seatDisplay = state.seatLabels?.join(', ') || state.selectedSeats.join(', ');
-
-    const paymentOptions = [
-        { id: 'upi', icon: '📱', label: 'Pay by any UPI App' },
-        { id: 'card', icon: '💳', label: 'Debit / Credit Card' },
-        { id: 'wallet', icon: '👛', label: 'Mobile Wallets' },
-        { id: 'netbanking', icon: '🏦', label: 'Net Banking' },
-    ];
 
     return (
         <div className="min-h-screen bg-background">
@@ -118,20 +88,20 @@ const OrderSummaryPage = () => {
                     <button
                         onClick={handleCancel}
                         disabled={isProcessing}
-                        className="p-2 hover:bg-secondary rounded-md transition"
+                        className="p-2 hover:bg-secondary rounded-md transition flex-shrink-0"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
-                    <div>
-                        <h1 className="text-base font-semibold">{state.movieTitle}</h1>
-                        <p className="text-xs text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                        <h1 className="text-sm sm:text-base font-semibold truncate">{state.movieTitle}</h1>
+                        <p className="text-xs text-muted-foreground truncate">
                             {state.cinemaName} &bull; {state.showDate} &bull; {state.startTime}
                         </p>
                     </div>
                     {timeLeft && (
-                        <div className="ml-auto flex items-center gap-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 text-xs font-semibold px-3 py-1.5 rounded-full">
+                        <div className="flex-shrink-0 flex items-center gap-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 text-xs font-semibold px-3 py-1.5 rounded-full">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -143,40 +113,57 @@ const OrderSummaryPage = () => {
 
             {/* Body */}
             <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-6">
-                <div className="flex flex-col lg:flex-row gap-6 items-start">
+                <div className="flex flex-col lg:flex-row gap-6 items-start max-w-4xl mx-auto lg:max-w-none">
 
-                    {/* Left: Payment Options */}
-                    <div className="w-full lg:w-[60%] bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                    {/* Left: Razorpay payment panel */}
+                    <div className="w-full lg:w-[55%] bg-card rounded-xl border border-border overflow-hidden shadow-sm">
                         <div className="px-5 py-4 border-b border-border">
-                            <h2 className="text-base font-semibold">Payment Options</h2>
-                        </div>
-                        <div className="divide-y divide-border">
-                            {paymentOptions.map(opt => (
-                                <PaymentOption
-                                    key={opt.id}
-                                    icon={opt.icon}
-                                    label={opt.label}
-                                    selected={selectedPayment === opt.id}
-                                    onClick={() => setSelectedPayment(opt.id)}
-                                />
-                            ))}
+                            <h2 className="text-base font-semibold">Payment</h2>
                         </div>
 
-                        {/* Selected option detail */}
-                        <div className="px-5 py-5 border-t border-border bg-secondary/30">
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {selectedPayment === 'upi' && 'Pay securely using any UPI app like GPay, PhonePe, Paytm, etc.'}
-                                {selectedPayment === 'card' && 'Pay using your Debit or Credit card.'}
-                                {selectedPayment === 'wallet' && 'Pay using mobile wallets like Paytm, Amazon Pay, etc.'}
-                                {selectedPayment === 'netbanking' && 'Pay directly from your bank account.'}
-                            </p>
+                        <div className="px-5 py-6">
+                            {/* Razorpay branding */}
+                            <div className="flex items-center gap-3 p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 mb-6">
+                                <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold">Secure Payment via Razorpay</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                        UPI, Cards, Wallets, Net Banking &amp; more
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Amount summary */}
+                            <div className="rounded-lg bg-secondary/40 px-4 py-3 mb-6 flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground">Amount to pay</span>
+                                <span className="text-xl font-bold">₹{grandTotal.toLocaleString('en-IN')}</span>
+                            </div>
+
+                            {/* Pay button */}
                             <button
                                 onClick={handlePay}
                                 disabled={isProcessing}
-                                className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white py-3.5 rounded-lg font-semibold text-sm transition"
+                                className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white py-3.5 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2"
                             >
-                                {isProcessing ? 'Processing...' : `Pay ₹${grandTotal.toLocaleString('en-IN')}`}
+                                {isProcessing ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Processing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        Pay ₹{grandTotal.toLocaleString('en-IN')}
+                                    </>
+                                )}
                             </button>
+
                             <p className="text-xs text-muted-foreground text-center mt-3">
                                 By proceeding, I express my consent to complete this transaction.
                             </p>
@@ -184,18 +171,20 @@ const OrderSummaryPage = () => {
                     </div>
 
                     {/* Right: Order Summary */}
-                    <div className="w-full lg:w-[40%] bg-card rounded-xl border border-border overflow-hidden shadow-sm sticky top-20">
+                    <div className="w-full lg:w-[45%] bg-card rounded-xl border border-border overflow-hidden shadow-sm lg:sticky lg:top-20">
                         {/* Movie info */}
                         <div className="px-5 py-4 border-b border-border">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="font-semibold text-base">{state.movieTitle}</h3>
+                            <div className="flex justify-between items-start gap-2">
+                                <div className="min-w-0">
+                                    <h3 className="font-semibold text-base truncate">{state.movieTitle}</h3>
                                     <p className="text-xs text-muted-foreground mt-0.5">
                                         {state.showDate} &bull; {state.startTime}
                                     </p>
                                     <p className="text-xs text-muted-foreground">{state.language} ({state.screenType})</p>
                                 </div>
-                                <span className="text-sm font-bold text-foreground">{state.selectedSeats.length}</span>
+                                <span className="text-sm font-bold bg-secondary px-2 py-0.5 rounded flex-shrink-0">
+                                    {state.selectedSeats.length} {state.selectedSeats.length === 1 ? 'Ticket' : 'Tickets'}
+                                </span>
                             </div>
                         </div>
 
@@ -215,7 +204,7 @@ const OrderSummaryPage = () => {
                             <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">
                                     Convenience fees
-                                    <span className="text-xs ml-1 text-muted-foreground/70">(₹{CONVENIENCE_FEE_PER_TICKET}/ticket)</span>
+                                    <span className="text-xs ml-1 opacity-60">(₹{CONVENIENCE_FEE_PER_TICKET}/ticket)</span>
                                 </span>
                                 <span>₹{convenienceFees}</span>
                             </div>
@@ -225,7 +214,6 @@ const OrderSummaryPage = () => {
                             </div>
                         </div>
 
-                        {/* Cancel link */}
                         <div className="px-5 pb-4">
                             <button
                                 onClick={handleCancel}
@@ -236,6 +224,7 @@ const OrderSummaryPage = () => {
                             </button>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
