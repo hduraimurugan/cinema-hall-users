@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Film, Bell, Search, MapPin, User, LogOut, Settings, Sun, Moon, Menu } from 'lucide-react'
+import { Film, Bell, Search, MapPin, User, LogOut, Settings, Sun, Moon, Menu, X, Ticket } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -17,16 +17,16 @@ import { useTheme } from "../context/ThemeContext"
 import { LoginModal } from "./LoginModal"
 import { LocationModal } from "./LocationModal"
 
-// Mock notifications
 const mockNotifications = [
-    { id: 1, title: "New booking received", time: "2 min ago", type: "booking" },
-    { id: 2, title: "Screen 3 maintenance due", time: "1 hour ago", type: "maintenance" },
-    { id: 3, title: "Revenue target achieved", time: "3 hours ago", type: "success" },
+    { id: 1, title: "Booking confirmed — Thaai Kizhavi", time: "2 min ago", unread: true },
+    { id: 2, title: "Upcoming show reminder in 2 hours", time: "1 hour ago", unread: true },
+    { id: 3, title: "Special offer: 20% off on weekdays", time: "3 hours ago", unread: false },
 ]
 
 export function TopBar() {
     const [searchValue, setSearchValue] = useState("")
     const [isSearchFocused, setIsSearchFocused] = useState(false)
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
     const [loginOpen, setLoginOpen] = useState(false)
     const [locationOpen, setLocationOpen] = useState(false)
 
@@ -35,7 +35,6 @@ export function TopBar() {
     const location = useLocation()
     const navigate = useNavigate()
 
-    // Auto-open login modal when redirected from a protected route
     useEffect(() => {
         if (location.state?.openLogin) {
             setLoginOpen(true)
@@ -43,7 +42,6 @@ export function TopBar() {
         }
     }, [location.state?.openLogin])
 
-    // Auto-open location modal when no location is available
     useEffect(() => {
         if (!locationLoading && !district && !state) {
             setLocationOpen(true)
@@ -52,212 +50,270 @@ export function TopBar() {
 
     const handleSearch = (e) => {
         e.preventDefault()
-        console.log("Searching for:", searchValue)
+        if (searchValue.trim()) {
+            navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`)
+            setMobileSearchOpen(false)
+        }
     }
+
+    const unreadCount = mockNotifications.filter(n => n.unread).length
 
     return (
         <>
-            <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="mx-auto container h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-                    {/* Left: Logo */}
-                    <Link to="/" className="flex items-center gap-2 shrink-0">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                            <Film className="h-5 w-5" />
+            <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 shadow-sm">
+                <div className="mx-auto container flex h-14 sm:h-16 items-center px-3 sm:px-6 lg:px-8">
+
+                    {/* Mobile search overlay */}
+                    {mobileSearchOpen && (
+                        <div className="flex sm:hidden items-center gap-2 w-full">
+                            <form onSubmit={handleSearch} className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+                                <Input
+                                    type="search"
+                                    placeholder="Search movies, events..."
+                                    className="pl-9 h-9 rounded-full bg-secondary/60 border-primary/20 focus-visible:ring-primary/30 text-sm"
+                                    value={searchValue}
+                                    onChange={(e) => setSearchValue(e.target.value)}
+                                    autoFocus
+                                />
+                            </form>
+                            <Button
+                                variant="ghost" size="icon"
+                                className="h-9 w-9 shrink-0 rounded-full"
+                                onClick={() => { setMobileSearchOpen(false); setSearchValue("") }}
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
                         </div>
-                        <span className="text-xl font-bold text-primary hidden sm:inline">
-                            CineMax
-                        </span>
-                    </Link>
+                    )}
 
-                    {/* Center: Search Bar */}
-                    <div className="hidden sm:flex flex-1 max-w-2xl mx-4">
-                        <form onSubmit={handleSearch} className="relative w-full">
-                            <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors ${isSearchFocused ? "text-primary" : "text-muted-foreground"}`} />
-                            <Input
-                                type="search"
-                                placeholder="Search for Movies, Events, Plays, Sports and Activities"
-                                className={`pl-10 bg-secondary/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${isSearchFocused ? "shadow-md" : ""}`}
-                                value={searchValue}
-                                onChange={(e) => setSearchValue(e.target.value)}
-                                onFocus={() => setIsSearchFocused(true)}
-                                onBlur={() => setIsSearchFocused(false)}
-                            />
-                        </form>
-                    </div>
+                    {/* Main bar — hidden on mobile when search is open */}
+                    <div className={`${mobileSearchOpen ? "hidden sm:flex" : "flex"} items-center justify-between flex-1 gap-2`}>
 
-                    {/* Right: Controls */}
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        {/* Mobile Search Icon */}
-                        <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => alert("Mobile search to be implemented")}>
-                            <Search className="h-5 w-5" />
-                        </Button>
-
-                        {/* Desktop Theme Toggle */}
-                        <Button variant="ghost" size="icon" onClick={toggleTheme} className="hidden sm:inline-flex rounded-full hover:bg-primary/10">
-                            {theme === "dark" ? <Sun className="h-5 w-5 hover:rotate-45" /> : <Moon className="h-5 w-5 hover:-rotate-45" />}
-                            <span className="sr-only">Toggle theme</span>
-                        </Button>
-
-                        {/* Desktop Location Selector */}
-                        <Button
-                            variant="ghost"
-                            className="hidden sm:flex items-center gap-2 text-sm rounded-full px-4 py-2 hover:bg-primary/10 transition-all duration-200 group border border-border/50 hover:border-primary/30"
-                            onClick={() => setLocationOpen(true)}
-                        >
-                            <MapPin className="h-4 w-4 text-primary group-hover:scale-110 transition-transform duration-200" />
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-medium text-foreground">{district || "Select"}</span>
-                                {district && state && (
-                                    <>
-                                        <span className="text-muted-foreground">•</span>
-                                        <span className="text-muted-foreground text-xs">{state}</span>
-                                    </>
-                                )}
+                        {/* Logo */}
+                        <Link to="/" className="flex items-center gap-2 shrink-0">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                                <Film className="h-4 w-4" />
                             </div>
-                        </Button>
+                            <span className="hidden sm:block font-bold text-primary text-lg tracking-tight">CineMax</span>
+                        </Link>
 
-                        {/* Notifications */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="relative rounded-full hover:bg-primary/10 transition-all duration-200"
-                                >
-                                    <Bell className="h-5 w-5" />
-                                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary animate-pulse">
-                                        <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-75"></span>
-                                    </span>
-                                    <span className="sr-only">Notifications</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-80">
-                                <DropdownMenuLabel className="font-normal">
-                                    <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium">Notifications</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            You have {mockNotifications.length} unread notifications
-                                        </p>
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <div className="max-h-64 overflow-y-auto">
-                                    {mockNotifications.map((notification) => (
-                                        <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-3 cursor-pointer">
-                                            <div className="flex w-full items-start justify-between">
-                                                <p className="text-sm font-medium">{notification.title}</p>
-                                                <span className="text-xs text-muted-foreground">{notification.time}</span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                    ))}
-                                </div>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <Link to="/notifications" className="w-full text-center">
-                                        View all notifications
-                                    </Link>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {/* Desktop search bar */}
+                        <div className="hidden sm:flex flex-1 max-w-xl mx-4">
+                            <form onSubmit={handleSearch} className="relative w-full">
+                                <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors duration-200 ${isSearchFocused ? "text-primary" : "text-muted-foreground"}`} />
+                                <Input
+                                    type="search"
+                                    placeholder="Search movies, events, shows..."
+                                    className="pl-10 h-9 rounded-full bg-secondary/50 border-transparent focus-visible:border-primary/30 focus-visible:ring-primary/20 text-sm transition-all duration-200"
+                                    value={searchValue}
+                                    onChange={(e) => setSearchValue(e.target.value)}
+                                    onFocus={() => setIsSearchFocused(true)}
+                                    onBlur={() => setIsSearchFocused(false)}
+                                />
+                            </form>
+                        </div>
 
-                        {/* customer or Sign In */}
-                        {customer ? (
+                        {/* Right controls */}
+                        <div className="flex items-center gap-0.5 sm:gap-1">
+
+                            {/* Mobile: search icon */}
+                            <Button
+                                variant="ghost" size="icon"
+                                className="sm:hidden h-9 w-9 rounded-full hover:bg-primary/10"
+                                onClick={() => setMobileSearchOpen(true)}
+                            >
+                                <Search className="h-[18px] w-[18px]" />
+                            </Button>
+
+                            {/* Mobile: location icon with dot if set */}
+                            <Button
+                                variant="ghost" size="icon"
+                                className="sm:hidden h-9 w-9 rounded-full hover:bg-primary/10 relative"
+                                onClick={() => setLocationOpen(true)}
+                            >
+                                <MapPin className="h-[18px] w-[18px]" />
+                                {district && (
+                                    <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
+                                )}
+                            </Button>
+
+                            {/* Desktop: theme toggle */}
+                            <Button
+                                variant="ghost" size="icon"
+                                onClick={toggleTheme}
+                                className="hidden sm:inline-flex h-9 w-9 rounded-full hover:bg-primary/10 transition-all duration-200"
+                            >
+                                {theme === "dark"
+                                    ? <Sun className="h-[18px] w-[18px]" />
+                                    : <Moon className="h-[18px] w-[18px]" />
+                                }
+                                <span className="sr-only">Toggle theme</span>
+                            </Button>
+
+                            {/* Desktop: location pill */}
+                            <Button
+                                variant="ghost"
+                                onClick={() => setLocationOpen(true)}
+                                className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-full text-sm hover:bg-primary/10 border border-border/50 hover:border-primary/30 transition-all duration-200"
+                            >
+                                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                                <span className="font-medium">{district || "Select city"}</span>
+                                {district && state && (
+                                    <span className="text-muted-foreground text-xs shrink-0">· {state}</span>
+                                )}
+                            </Button>
+
+                            {/* Notifications */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
-                                        variant="ghost"
+                                        variant="ghost" size="icon"
                                         className="relative h-9 w-9 rounded-full hover:bg-primary/10 transition-all duration-200"
                                     >
-                                        <Avatar className="h-9 w-9 border-2 border-primary/20">
-                                            <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
-                                                {customer?.name?.charAt(0) || 'U'}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <Bell className="h-[18px] w-[18px]" />
+                                        {unreadCount > 0 && (
+                                            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                                                {unreadCount}
+                                            </span>
+                                        )}
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56">
-                                    <DropdownMenuLabel className="font-normal">
-                                        <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-medium">{customer.name}</p>
-                                            <p className="text-xs text-muted-foreground">{customer.email}</p>
-                                        </div>
+                                <DropdownMenuContent align="end" className="w-80">
+                                    <DropdownMenuLabel className="flex items-center justify-between py-3">
+                                        <span className="font-semibold text-sm">Notifications</span>
+                                        {unreadCount > 0 && (
+                                            <span className="text-xs text-primary font-medium">{unreadCount} unread</span>
+                                        )}
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild>
-                                        <Link to="/profile" className="flex cursor-pointer items-center gap-2">
-                                            <User className="h-4 w-4" />
-                                            Profile
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link to="/settings" className="flex cursor-pointer items-center gap-2">
-                                            <Settings className="h-4 w-4" />
-                                            Settings
-                                        </Link>
-                                    </DropdownMenuItem>
+                                    <div className="max-h-64 overflow-y-auto">
+                                        {mockNotifications.map((n) => (
+                                            <DropdownMenuItem key={n.id} className="flex items-start gap-3 p-3 cursor-pointer">
+                                                <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${n.unread ? "bg-primary" : "bg-transparent"}`} />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className={`text-sm leading-snug ${n.unread ? "font-medium" : "text-muted-foreground"}`}>
+                                                        {n.title}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground mt-0.5">{n.time}</p>
+                                                </div>
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </div>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
-                                        onClick={logout}
-                                    >
-                                        <LogOut className="h-4 w-4" />
-                                        Logout
+                                    <DropdownMenuItem className="justify-center text-primary text-sm font-medium py-2.5" asChild>
+                                        <Link to="/notifications">View all notifications</Link>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        ) : (
-                            <Button size="sm" className="sm:inline-flex bg-primary text-primary-foreground" onClick={() => setLoginOpen(true)}>
-                                Sign in
-                            </Button>
-                        )}
 
-                        {/* Mobile Dropdown for Theme, Location, and Login */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger className="sm:hidden inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                                <Menu className="h-5 w-5" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={toggleTheme}>
-                                    {theme === "dark" ? (
+                            {/* User avatar / Sign In */}
+                            {customer ? (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10 p-0 ml-0.5">
+                                            <Avatar className="h-8 w-8 border-2 border-primary/30">
+                                                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-bold">
+                                                    {customer?.name?.charAt(0).toUpperCase() || "U"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <DropdownMenuLabel className="font-normal py-3">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-9 w-9 border border-primary/20">
+                                                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-bold">
+                                                        {customer?.name?.charAt(0).toUpperCase() || "U"}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-semibold leading-none whitespace-nowrap">{customer.name}</p>
+                                                    <p className="text-xs text-muted-foreground mt-1 truncate">{customer.email}</p>
+                                                </div>
+                                            </div>
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem asChild>
+                                            <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                                                <User className="h-4 w-4" /> Profile
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link to="/bookings" className="flex items-center gap-2 cursor-pointer">
+                                                <Ticket className="h-4 w-4" /> My Bookings
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+                                                <Settings className="h-4 w-4" /> Settings
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            className="flex items-center gap-2 text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                                            onClick={logout}
+                                        >
+                                            <LogOut className="h-4 w-4" /> Logout
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    className="h-8 px-3 sm:px-4 text-xs sm:text-sm font-semibold rounded-full shadow-sm ml-0.5"
+                                    onClick={() => setLoginOpen(true)}
+                                >
+                                    Sign in
+                                </Button>
+                            )}
+
+                            {/* Mobile: hamburger for theme + location details */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost" size="icon"
+                                        className="sm:hidden h-9 w-9 rounded-full hover:bg-primary/10 ml-0.5"
+                                    >
+                                        <Menu className="h-5 w-5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-52">
+                                    <DropdownMenuItem onClick={toggleTheme} className="gap-2">
+                                        {theme === "dark"
+                                            ? <><Sun className="h-4 w-4" /> Light Mode</>
+                                            : <><Moon className="h-4 w-4" /> Dark Mode</>
+                                        }
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => setTimeout(() => setLocationOpen(true), 0)}
+                                        className="gap-2"
+                                    >
+                                        <MapPin className="h-4 w-4 text-primary" />
+                                        <span className="truncate">
+                                            {district ? `${district}${state ? ", " + state : ""}` : "Select Location"}
+                                        </span>
+                                    </DropdownMenuItem>
+                                    {customer && (
                                         <>
-                                            <Sun className="mr-2 h-4 w-4" />
-                                            Light Mode
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Moon className="mr-2 h-4 w-4" />
-                                            Dark Mode
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem asChild>
+                                                <Link to="/bookings" className="flex items-center gap-2">
+                                                    <Ticket className="h-4 w-4" /> My Bookings
+                                                </Link>
+                                            </DropdownMenuItem>
                                         </>
                                     )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setTimeout(() => setLocationOpen(true), 0)}>
-                                    <MapPin className="mr-2 h-4 w-4 text-primary" />
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-medium">{district || "Select Location"}</span>
-                                        {district && state && (
-                                            <>
-                                                <span className="text-muted-foreground">•</span>
-                                                <span className="text-muted-foreground text-xs">{state}</span>
-                                            </>
-                                        )}
-                                    </div>
-                                </DropdownMenuItem>
-                                {!customer && (
-                                    <DropdownMenuItem onClick={() => setTimeout(() => setLoginOpen(true), 0)}>
-                                        <User className="mr-2 h-4 w-4" />
-                                        Sign In
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                        </div>
                     </div>
+
                 </div>
-            </div>
+            </header>
 
-            {/* Login Modal */}
             <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
-
-            {/* Location Modal */}
             <LocationModal open={locationOpen} onOpenChange={setLocationOpen} />
         </>
     )
