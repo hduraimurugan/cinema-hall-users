@@ -116,7 +116,7 @@ const SeatSelectionPage = () => {
             return 'bg-gray-300 dark:bg-zinc-700 text-gray-400 dark:text-zinc-500 cursor-not-allowed border border-gray-300 dark:border-zinc-700';
         }
         if (selectedSeats.includes(seat.id)) {
-            return 'bg-green-500 border border-green-500 text-white cursor-pointer shadow-sm';
+            return 'bg-emerald-500 border border-emerald-500 text-white cursor-pointer shadow-sm';
         }
         return 'bg-transparent border border-gray-400 dark:border-zinc-500 text-gray-600 dark:text-zinc-300 hover:border-gray-700 dark:hover:border-zinc-300 cursor-pointer';
     };
@@ -303,7 +303,7 @@ const SeatSelectionPage = () => {
                             <span>Sold</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm bg-green-500" />
+                            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm bg-emerald-500" />
                             <span>Selected</span>
                         </div>
                     </div>
@@ -335,7 +335,7 @@ const SeatSelectionPage = () => {
                         <button
                             onClick={handleProceed}
                             disabled={isProcessing}
-                            className="bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-50 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-semibold text-sm transition"
+                            className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-semibold text-sm transition cursor-pointer disabled:pointer-events-none"
                         >
                             {isProcessing ? 'Processing...' : 'Proceed to Payment'}
                         </button>
