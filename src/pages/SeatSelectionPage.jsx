@@ -87,7 +87,8 @@ const SeatSelectionPage = () => {
                         holdExpiry: result.hold_expires_at,
                         totalAmount: calculateTotal(),
                         movieTitle: showData.movie?.title,
-                        language: showData.movie?.language?.join(', ') || 'Tamil',
+                        language: showData.show_details?.language_version || showData.movie?.language?.join(', ') || 'Tamil',
+                        // language: showData.movie?.language?.join(', ') || 'Tamil',
                         showDate: showData.show_details?.show_date,
                         startTime: showData.show_details?.start_time,
                         screenName: showData.screen?.name,
@@ -265,7 +266,7 @@ const SeatSelectionPage = () => {
                             <h1 className="text-sm sm:text-base font-semibold leading-tight truncate">
                                 {showData.movie?.title}
                                 <span className="text-xs font-normal text-muted-foreground ml-1.5 hidden sm:inline">
-                                    ({showData.movie?.language?.join(', ') || 'Tamil'})
+                                    ({showData.show_details?.language_version || showData.movie?.language?.join(', ') || 'Tamil'})
                                 </span>
                             </h1>
                             <p className="text-xs text-muted-foreground truncate">
