@@ -281,15 +281,24 @@ export const bookingAPI = {
   }
 };
 
+// ✅ Settings API (public)
+export const settingsAPI = {
+  getSettings: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/settings`);
+    if (!response.ok) throw new Error("Failed to fetch settings");
+    return response.json();
+  }
+};
+
 // ✅ Payment API (Razorpay integration)
 export const paymentAPI = {
-  // Create Razorpay order
-  createOrder: async (show_id, seats, amount) => {
+  // Create Razorpay order - amount is calculated server-side
+  createOrder: async (show_id, seats) => {
     const response = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ show_id, seats, amount })
+      body: JSON.stringify({ show_id, seats })
     });
     if (!response.ok) throw await response.json();
     return response.json();

@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { bookingAPI } from '../services/api';
+import { bookingAPI, settingsAPI } from '../services/api';
 import { useRazorpayPayment } from '../hooks/useRazorpayPayment';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
-
-const CONVENIENCE_FEE_PER_TICKET = 15;
 
 const OrderSummaryPage = () => {
     const navigate = useNavigate();
@@ -15,10 +13,24 @@ const OrderSummaryPage = () => {
 
     const [timeLeft, setTimeLeft] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [convenienceFeePerTicket, setConvenienceFeePerTicket] = useState(null);
+    const [gstPercentage, setGstPercentage] = useState(null);
 
     useEffect(() => {
         if (!state?.showId) navigate('/movies', { replace: true });
     }, [state, navigate]);
+
+    useEffect(() => {
+        settingsAPI.getSettings()
+            .then(data => {
+                setConvenienceFeePerTicket(data.convenience_fee_per_ticket ?? 15);
+                setGstPercentage(data.gst_percentage ?? 18);
+            })
+            .catch(() => {
+                setConvenienceFeePerTicket(15);
+                setGstPercentage(18);
+            });
+    }, []);
 
     useEffect(() => {
         if (!state?.holdExpiry) return;
@@ -51,13 +63,11 @@ const OrderSummaryPage = () => {
             toast.error('Please login to continue');
             return;
         }
-        const grandTotal = state.totalAmount + state.selectedSeats.length * CONVENIENCE_FEE_PER_TICKET;
         try {
             setIsProcessing(true);
             const result = await initiatePayment({
                 show_id: state.showId,
                 seats: state.selectedSeats,
-                amount: grandTotal,
                 customer,
             });
             toast.success('Payment successful! Booking confirmed.');
@@ -76,9 +86,14 @@ const OrderSummaryPage = () => {
 
     if (!state?.showId) return null;
 
-    const convenienceFees = state.selectedSeats.length * CONVENIENCE_FEE_PER_TICKET;
-    const grandTotal = state.totalAmount + convenienceFees;
+    const numTickets = state.selectedSeats.length;
     const seatDisplay = state.seatLabels?.join(', ') || state.selectedSeats.join(', ');
+
+    // Show loading state while settings are fetching
+    const settingsLoaded = convenienceFeePerTicket !== null && gstPercentage !== null;
+    const convenienceTotal = settingsLoaded ? numTickets * convenienceFeePerTicket : 0;
+    const gstAmount = settingsLoaded ? +(convenienceTotal * (gstPercentage / 100)).toFixed(2) : 0;
+    const grandTotal = state.totalAmount + convenienceTotal + gstAmount;
 
     return (
         <div className="min-h-screen bg-background">
@@ -140,13 +155,15 @@ const OrderSummaryPage = () => {
                             {/* Amount summary */}
                             <div className="rounded-lg bg-secondary/40 px-4 py-3 mb-6 flex items-center justify-between">
                                 <span className="text-sm text-muted-foreground">Amount to pay</span>
-                                <span className="text-xl font-bold">₹{grandTotal.toLocaleString('en-IN')}</span>
+                                <span className="text-xl font-bold">
+                                    {settingsLoaded ? `₹${grandTotal.toLocaleString('en-IN')}` : '...'}
+                                </span>
                             </div>
 
                             {/* Pay button */}
                             <button
                                 onClick={handlePay}
-                                disabled={isProcessing}
+                                disabled={isProcessing || !settingsLoaded}
                                 className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white py-3.5 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2"
                             >
                                 {isProcessing ? (
@@ -159,7 +176,7 @@ const OrderSummaryPage = () => {
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                         </svg>
-                                        Pay ₹{grandTotal.toLocaleString('en-IN')}
+                                        {settingsLoaded ? `Pay ₹${grandTotal.toLocaleString('en-IN')}` : 'Loading...'}
                                     </>
                                 )}
                             </button>
@@ -183,7 +200,7 @@ const OrderSummaryPage = () => {
                                     <p className="text-xs text-muted-foreground">{state.language} ({state.screenType})</p>
                                 </div>
                                 <span className="text-sm font-bold bg-secondary px-2 py-0.5 rounded flex-shrink-0">
-                                    {state.selectedSeats.length} {state.selectedSeats.length === 1 ? 'Ticket' : 'Tickets'}
+                                    {numTickets} {numTickets === 1 ? 'Ticket' : 'Tickets'}
                                 </span>
                             </div>
                         </div>
@@ -204,13 +221,24 @@ const OrderSummaryPage = () => {
                             <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">
                                     Convenience fees
-                                    <span className="text-xs ml-1 opacity-60">(₹{CONVENIENCE_FEE_PER_TICKET}/ticket)</span>
+                                    {settingsLoaded && (
+                                        <span className="text-xs ml-1 opacity-60">(₹{convenienceFeePerTicket}/ticket)</span>
+                                    )}
                                 </span>
-                                <span>₹{convenienceFees}</span>
+                                <span>{settingsLoaded ? `₹${convenienceTotal.toLocaleString('en-IN')}` : '...'}</span>
                             </div>
+                            {settingsLoaded && gstAmount > 0 && (
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">
+                                        GST
+                                        <span className="text-xs ml-1 opacity-60">({gstPercentage}% on conv. fee)</span>
+                                    </span>
+                                    <span>₹{gstAmount.toLocaleString('en-IN')}</span>
+                                </div>
+                            )}
                             <div className="border-t border-border pt-2.5 flex justify-between font-semibold">
                                 <span>Amount Payable</span>
-                                <span>₹{grandTotal.toLocaleString('en-IN')}</span>
+                                <span>{settingsLoaded ? `₹${grandTotal.toLocaleString('en-IN')}` : '...'}</span>
                             </div>
                         </div>
 

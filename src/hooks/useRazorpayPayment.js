@@ -1,10 +1,10 @@
 import { paymentAPI } from "../services/api";
 
 export const useRazorpayPayment = () => {
-    const initiatePayment = async ({ show_id, seats, amount, customer }) => {
+    const initiatePayment = async ({ show_id, seats, customer }) => {
         try {
-            // 1. Create order on backend
-            const order = await paymentAPI.createOrder(show_id, seats, amount);
+            // 1. Create order on backend (amount calculated server-side)
+            const order = await paymentAPI.createOrder(show_id, seats);
 
             // 2. Open Razorpay checkout modal
             return new Promise((resolve, reject) => {
