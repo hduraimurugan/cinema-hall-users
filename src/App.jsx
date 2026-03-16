@@ -12,6 +12,7 @@ import MovieDetailsPage from './pages/MovieDetailsPage.jsx';
 import MovieInfoPage from './pages/MovieInfoPage.jsx';
 import SeatSelectionPage from './pages/SeatSelectionPage.jsx';
 import BookingSuccessPage from './pages/BookingSuccessPage.jsx';
+import OrderSummaryPage from './pages/OrderSummaryPage.jsx';
 import { ProtectedRoute } from './routes/ProtectedRoutes.jsx';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Route path="/movie/:movieId" element={<MovieInfoPage />} />
             <Route path="/movie/shows/:movieId" element={<MovieDetailsPage />} />
             <Route path="/show/:showId" element={<SeatSelectionPage />} />
+            <Route path="/order-summary" element={<OrderSummaryPage />} />
             <Route path="/booking/success" element={<BookingSuccessPage />} />
             <Route path="/theatres" element={<TheatresPage />} />
             <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />

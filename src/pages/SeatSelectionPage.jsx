@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { showsAPI, bookingAPI } from '../services/api';
-import { useRazorpayPayment } from '../hooks/useRazorpayPayment';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
 import { LoginModal } from '../components/LoginModal';
@@ -10,44 +9,16 @@ const SeatSelectionPage = () => {
     const { showId } = useParams();
     const navigate = useNavigate();
     const { customer } = useCustomerAuth();
-    const { initiatePayment } = useRazorpayPayment();
 
     const [showData, setShowData] = useState(null);
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [holdExpiry, setHoldExpiry] = useState(null);
-    const [timeLeft, setTimeLeft] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [loginOpen, setLoginOpen] = useState(false);
 
     useEffect(() => {
         fetchShowDetails();
     }, [showId]);
-
-    // Countdown timer
-    useEffect(() => {
-        if (!holdExpiry) return;
-
-        const interval = setInterval(() => {
-            const now = new Date();
-            const expiry = new Date(holdExpiry);
-            const diff = expiry - now;
-
-            if (diff <= 0) {
-                setHoldExpiry(null);
-                setTimeLeft(null);
-                toast.error('Seat hold expired. Please select again.');
-                setSelectedSeats([]);
-                fetchShowDetails();
-            } else {
-                const minutes = Math.floor(diff / 60000);
-                const seconds = Math.floor((diff % 60000) / 1000);
-                setTimeLeft(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [holdExpiry]);
 
     const fetchShowDetails = async () => {
         try {
@@ -64,18 +35,10 @@ const SeatSelectionPage = () => {
 
     const getSeatPrice = (seatType) => {
         if (!showData) return 0;
-
         const priceOverride = showData.show_details?.price_override;
         const layout = showData.screen?.layout;
-
-        if (priceOverride && priceOverride[seatType]) {
-            return parseInt(priceOverride[seatType]) || 0;
-        }
-
-        if (layout?.pricing?.[seatType]) {
-            return parseInt(layout.pricing[seatType]) || 0;
-        }
-
+        if (priceOverride && priceOverride[seatType]) return parseInt(priceOverride[seatType]) || 0;
+        if (layout?.pricing?.[seatType]) return parseInt(layout.pricing[seatType]) || 0;
         return 0;
     };
 
@@ -86,41 +49,52 @@ const SeatSelectionPage = () => {
         }, 0);
     };
 
-    const toggleSeat = (seat) => {
-        if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') return;
-        if (holdExpiry) return; // Can't change after holding
-
-        console.log("seat", seat);
-
-        setSelectedSeats(prev => {
-            if (prev.includes(seat.id)) {
-                return prev.filter(id => id !== seat.id);
-            } else {
-                return [...prev, seat.id];
-            }
-        });
+    const getSeatLabels = () => {
+        return selectedSeats.map(id => {
+            const seat = showData?.screen?.layout?.seats.find(s => s.id === id);
+            return seat?.seat_label || id;
+        }).filter(Boolean);
     };
 
-    const handleHoldSeats = async () => {
+    const toggleSeat = (seat) => {
+        if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') return;
+        setSelectedSeats(prev =>
+            prev.includes(seat.id) ? prev.filter(id => id !== seat.id) : [...prev, seat.id]
+        );
+    };
+
+    const handleProceed = async () => {
         if (selectedSeats.length === 0) {
             toast.error('Please select at least one seat');
             return;
         }
-
         if (!customer) {
             setLoginOpen(true);
             return;
         }
-
-        console.log("selectedSeats", selectedSeats);
 
         try {
             setIsProcessing(true);
             const result = await bookingAPI.holdSeats(showId, selectedSeats);
 
             if (result.success) {
-                setHoldExpiry(result.hold_expires_at);
                 toast.success(`${selectedSeats.length} seat(s) held for 5 minutes`);
+                navigate('/order-summary', {
+                    state: {
+                        showId,
+                        selectedSeats,
+                        seatLabels: getSeatLabels(),
+                        holdExpiry: result.hold_expires_at,
+                        totalAmount: calculateTotal(),
+                        movieTitle: showData.movie?.title,
+                        language: showData.movie?.language?.join(', ') || 'Tamil',
+                        showDate: showData.show_details?.show_date,
+                        startTime: showData.show_details?.start_time,
+                        screenName: showData.screen?.name,
+                        screenType: showData.screen?.screen_type || '2D',
+                        cinemaName: showData.cinema_hall?.name || showData.screen?.name,
+                    }
+                });
             }
         } catch (error) {
             console.error('Failed to hold seats:', error);
@@ -132,80 +106,27 @@ const SeatSelectionPage = () => {
         }
     };
 
-    const handleCancelBooking = async () => {
-        try {
-            await bookingAPI.releaseSeats(showId, selectedSeats);
-            setSelectedSeats([]);
-            setHoldExpiry(null);
-            setTimeLeft(null);
-            toast.info('Booking cancelled');
-            fetchShowDetails();
-        } catch (error) {
-            console.error('Failed to release seats:', error);
-        }
-    };
-
-    const handlePayment = async () => {
-        if (!customer) {
-            toast.error('Please login to continue');
-            return;
-        }
-
-        try {
-            setIsProcessing(true);
-            const total = calculateTotal();
-
-            const result = await initiatePayment({
-                show_id: showId,
-                seats: selectedSeats,
-                amount: total,
-                customer: customer
-            });
-
-            toast.success('Payment successful! Booking confirmed.');
-            navigate(`/booking/success?payment_id=${result.booking.payment_id}`);
-        } catch (error) {
-            console.error('Payment failed:', error);
-            toast.error('Payment failed. Please try again.');
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    const getSeatColor = (seat) => {
-        const isSelected = selectedSeats.includes(seat.id);
-
+    const getSeatClasses = (seat) => {
         if (seat.type === 'passage' || seat.isBlocked || seat.status === 'blocked') {
             return 'invisible';
         }
-
-        if (seat.status === 'booked' || seat.status === 'BOOKED') {
-            return 'bg-gray-300 text-gray-500 cursor-not-allowed';
+        if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') {
+            return 'bg-zinc-600 text-zinc-500 cursor-not-allowed border border-zinc-600';
         }
-
-        if (seat.status === 'HELD') {
-            return 'bg-gray-300 text-gray-500 cursor-not-allowed';
+        if (selectedSeats.includes(seat.id)) {
+            return 'bg-green-500 border border-green-400 text-white cursor-pointer shadow-md shadow-green-900/50';
         }
-
-        if (isSelected) {
-            return 'bg-green-500 border-green-600 text-white shadow-lg';
-        }
-
-        // Available seats - green border with background
-        return 'bg-background border-2 border-green-400 hover:border-green-500 cursor-pointer';
+        return 'bg-transparent border border-zinc-500 text-zinc-300 hover:border-zinc-300 cursor-pointer';
     };
 
     const generateSeatsByCategory = () => {
         if (!showData?.screen?.layout?.seats) return { premium: [], gold: [], silver: [] };
-
         const seats = showData.screen.layout.seats;
-        const categorizedSeats = {
+        return {
             premium: seats.filter(seat => seat.type === 'premium'),
             gold: seats.filter(seat => seat.type === 'gold'),
             silver: seats.filter(seat => seat.type === 'silver'),
         };
-
-        return categorizedSeats;
     };
 
     const renderSeatSection = (seats, sectionTitle, price) => {
@@ -214,7 +135,6 @@ const SeatSelectionPage = () => {
         const aisleAfterColumns = showData?.screen?.layout?.aisleAfterColumns || [];
         const aisleAfterRows = showData?.screen?.layout?.aisleAfterRows || [];
 
-        // Group seats by row
         const seatsByRow = seats.reduce((acc, seat) => {
             const row = seat.seat_label?.charAt(0) || 'A';
             if (!acc[row]) acc[row] = [];
@@ -225,50 +145,44 @@ const SeatSelectionPage = () => {
         const sortedRows = Object.keys(seatsByRow).sort();
 
         return (
-            <div className="mb-8">
-                <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold mb-1">{sectionTitle}</h3>
-                    <p className="text-sm text-muted-foreground">₹{price}</p>
+            <div className="mb-10">
+                <div className="text-center mb-5">
+                    <span className="text-xs font-semibold text-zinc-400 tracking-widest uppercase">
+                        ₹{price} {sectionTitle}
+                    </span>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                     {sortedRows.map((row) => (
                         <React.Fragment key={row}>
                             <div className="flex items-center justify-center gap-1">
-                                <div className="w-8 text-center text-sm font-medium mr-2">{row}</div>
+                                <div className="w-6 text-center text-xs text-zinc-500 mr-1 flex-shrink-0">{row}</div>
                                 {seatsByRow[row]
                                     .sort((a, b) => {
                                         const aNum = parseInt(a.seat_label?.slice(1) || '0');
                                         const bNum = parseInt(b.seat_label?.slice(1) || '0');
                                         return aNum - bNum;
                                     })
-                                    .map((seat, index) => {
+                                    .map((seat) => {
                                         const colNum = parseInt(seat.seat_label?.slice(1) || '0');
-                                        const hasAisleAfterCol = aisleAfterColumns.includes(colNum);
+                                        const hasAisleAfter = aisleAfterColumns.includes(colNum);
+                                        const colLabel = String(colNum).padStart(2, '0');
                                         return (
                                             <React.Fragment key={seat.id}>
                                                 <button
                                                     onClick={() => toggleSeat(seat)}
-                                                    disabled={seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD' || holdExpiry}
-                                                    className={`
-                                                        w-8 h-8 text-xs font-medium rounded transition-all duration-200 transform
-                                                        ${getSeatColor(seat)}
-                                                        ${(seat.status === 'available' || seat.status === 'AVAILABLE') && !holdExpiry ? 'hover:scale-105' : ''}
-                                                        ${selectedSeats.includes(seat.id) ? 'ring-1 ring-green-400' : ''}
-                                                    `}
+                                                    disabled={seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD'}
+                                                    className={`w-7 h-7 text-[10px] font-medium rounded-sm transition-all duration-150 flex-shrink-0 ${getSeatClasses(seat)}`}
                                                     title={`${seat.seat_label} - ₹${price}`}
                                                 >
-                                                    {seat.seat_label?.slice(1) || index + 1}
+                                                    {colLabel}
                                                 </button>
-                                                {hasAisleAfterCol && (
-                                                    <div className="w-3" aria-hidden="true" />
-                                                )}
+                                                {hasAisleAfter && <div className="w-4 flex-shrink-0" aria-hidden="true" />}
                                             </React.Fragment>
                                         );
                                     })}
+                                <div className="w-6 flex-shrink-0" />
                             </div>
-                            {aisleAfterRows.includes(row) && (
-                                <div className="h-3" aria-hidden="true" />
-                            )}
+                            {aisleAfterRows.includes(row) && <div className="h-3" aria-hidden="true" />}
                         </React.Fragment>
                     ))}
                 </div>
@@ -296,188 +210,118 @@ const SeatSelectionPage = () => {
     }
 
     const categorizedSeats = generateSeatsByCategory();
+    const screenPosition = showData?.screen?.layout?.screenPosition || 'bottom';
+
+    const screenIndicator = (
+        <div className="my-8">
+            <div className="mx-auto max-w-lg">
+                <div className="h-[3px] bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full mb-2" />
+                <p className="text-center text-[10px] font-semibold tracking-[0.3em] text-blue-400 uppercase">
+                    All Eyes This Way
+                </p>
+            </div>
+        </div>
+    );
+
+    const seatLayout = (
+        <div>
+            {renderSeatSection(categorizedSeats.premium, 'Premium', getSeatPrice('premium'))}
+            {renderSeatSection(categorizedSeats.gold, 'Gold', getSeatPrice('gold'))}
+            {renderSeatSection(categorizedSeats.silver, 'Silver', getSeatPrice('silver'))}
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-background pb-20">
+        <div className="min-h-screen bg-background pb-24">
             {/* Header */}
             <div className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-4">
-                    <div className="flex items-center gap-4 mb-4">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-3">
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate(-1)}
-                            className="p-2 hover:bg-secondary rounded-md transition"
+                            className="p-2 hover:bg-secondary rounded-md transition flex-shrink-0"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
 
-                        <div className="flex gap-4 items-center flex-1">
-                            {/* Movie Poster */}
-                            {showData.movie?.poster_url && (
-                                <div className="h-20 w-14 rounded-md overflow-hidden flex-shrink-0 bg-muted border border-border">
-                                    <img
-                                        src={showData.movie.poster_url}
-                                        alt={showData.movie.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                            )}
-
-                            {/* Movie Info */}
-                            <div className="flex-1">
-                                <h1 className="text-lg font-semibold mb-1">
-                                    {showData.movie?.title}{' '}
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                        • {showData.movie?.language?.join(', ') || 'English'}
-                                    </span>
-                                </h1>
-                                <p className="text-sm text-muted-foreground mb-0.5">
-                                    📅 {showData.show_details?.show_date}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    🏟️ {showData.screen?.name}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Show Time & Timer */}
-                    <div className="flex gap-2 items-center">
-                        <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium">
-                            {showData.show_details?.start_time}
-                            <span className="text-xs opacity-80 ml-1">
-                                {showData.screen?.screen_type || '2D'}
-                            </span>
-                        </button>
-
-                        {holdExpiry && timeLeft && (
-                            <div className="flex items-center gap-2 bg-orange-100 dark:bg-orange-900/30 px-4 py-2 rounded-md ml-auto">
-                                <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span className="text-sm font-semibold text-orange-600">Time left: {timeLeft}</span>
+                        {showData.movie?.poster_url && (
+                            <div className="h-16 w-11 rounded overflow-hidden flex-shrink-0 bg-muted border border-border">
+                                <img src={showData.movie.poster_url} alt={showData.movie.title} className="w-full h-full object-cover" />
                             </div>
                         )}
+
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-base font-semibold truncate">
+                                {showData.movie?.title}
+                                <span className="text-sm font-normal text-muted-foreground ml-2">
+                                    ({showData.movie?.language?.join(', ') || 'Tamil'})
+                                </span>
+                            </h1>
+                            <p className="text-xs text-muted-foreground">{showData.cinema_hall?.name || showData.screen?.name}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="bg-blue-600 text-white text-xs px-2.5 py-0.5 rounded font-medium">
+                                    {showData.show_details?.start_time}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    {showData.show_details?.show_date}
+                                </span>
+                                <span className="text-xs border border-border rounded px-1.5 py-0.5">
+                                    {showData.screen?.screen_type || '2D'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Main Content */}
+            {/* Seat Layout */}
             <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-6">
-                <div className="bg-card rounded-lg shadow-lg border border-border p-6">
+                <div className="bg-zinc-900 dark:bg-zinc-950 rounded-xl border border-zinc-800 p-6 overflow-x-auto">
                     {/* Legend */}
-                    <div className="flex justify-center gap-6 mb-6 text-sm">
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-background border-2 border-green-400 rounded"></div>
-                            <span>AVAILABLE</span>
+                    <div className="flex justify-center gap-6 mb-8 text-xs text-zinc-400">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 rounded-sm border border-zinc-500" />
+                            <span>Available</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-gray-300 border-2 border-gray-400 rounded"></div>
-                            <span>BOOKED</span>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 rounded-sm bg-zinc-600 border border-zinc-600" />
+                            <span>Sold</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-green-500 border-2 border-green-600 rounded"></div>
-                            <span>SELECTED</span>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 rounded-sm bg-green-500 border border-green-400" />
+                            <span>Selected</span>
                         </div>
                     </div>
 
-                    {(() => {
-                        const screenPosition = showData?.screen?.layout?.screenPosition || 'bottom';
-                        const screenIndicator = (
-                            <div className="my-6">
-                                <div className="relative">
-                                    <div className="h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full mb-2"></div>
-                                    <div className="text-center">
-                                        <div className="inline-block bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full">
-                                            <span className="text-xs font-medium text-blue-600 dark:text-blue-400 tracking-wider">
-                                                SCREEN THIS WAY
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                        const seatLayout = (
-                            <div className="space-y-8">
-                                {renderSeatSection(categorizedSeats.premium, 'PREMIUM', getSeatPrice('premium'))}
-                                {categorizedSeats.premium.length > 0 && categorizedSeats.gold.length > 0 && <div className="h-4"></div>}
-                                {renderSeatSection(categorizedSeats.gold, 'GOLD', getSeatPrice('gold'))}
-                                {categorizedSeats.gold.length > 0 && categorizedSeats.silver.length > 0 && <div className="h-4"></div>}
-                                {renderSeatSection(categorizedSeats.silver, 'SILVER', getSeatPrice('silver'))}
-                            </div>
-                        );
-                        return screenPosition === 'top' ? (
-                            <>{screenIndicator}{seatLayout}</>
-                        ) : (
-                            <>{seatLayout}{screenIndicator}</>
-                        );
-                    })()}
+                    {screenPosition === 'top' ? (
+                        <>{screenIndicator}{seatLayout}</>
+                    ) : (
+                        <>{seatLayout}{screenIndicator}</>
+                    )}
                 </div>
             </div>
 
-            {/* Bottom Payment Bar */}
+            {/* Bottom bar */}
             {selectedSeats.length > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-20">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-4">
-                        {!holdExpiry ? (
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Selected: {selectedSeats.length} seat(s)</p>
-                                    <p className="text-xl font-bold">Total: ₹{calculateTotal()}</p>
-                                </div>
-                                <button
-                                    onClick={handleHoldSeats}
-                                    disabled={isProcessing}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold disabled:opacity-50 transition"
-                                >
-                                    {isProcessing ? 'Processing...' : 'Proceed to Payment'}
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Your Booking</p>
-                                        <p className="font-semibold">{showData.movie?.title}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {showData.screen?.name} | {showData.show_details?.start_time}
-                                        </p>
-                                        <p className="text-sm mt-2">
-                                            Seats: {selectedSeats.map(id =>
-                                                showData?.screen?.layout?.seats.find(s => s.id === id)?.seat_label
-                                            ).filter(Boolean).join(', ')}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-sm text-muted-foreground">Total</p>
-                                        <p className="text-2xl font-bold">₹{calculateTotal()}</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={handleCancelBooking}
-                                        disabled={isProcessing}
-                                        className="flex-1 bg-secondary text-secondary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-secondary/80"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handlePayment}
-                                        disabled={isProcessing}
-                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
-                                    >
-                                        {isProcessing ? 'Processing...' : `Pay ₹${calculateTotal()}`}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-2xl z-20">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-3 flex items-center justify-between gap-4">
+                        <div>
+                            <p className="text-xs text-muted-foreground">{selectedSeats.length} Ticket(s)</p>
+                            <p className="text-lg font-bold">₹{calculateTotal()}</p>
+                        </div>
+                        <button
+                            onClick={handleProceed}
+                            disabled={isProcessing}
+                            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-8 py-3 rounded-lg font-semibold text-sm transition"
+                        >
+                            {isProcessing ? 'Processing...' : 'Proceed to Payment'}
+                        </button>
                     </div>
                 </div>
             )}
 
-            {/* Login Modal */}
             <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
         </div>
     );
