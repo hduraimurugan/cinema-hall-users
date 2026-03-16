@@ -43,7 +43,7 @@ const AdBanner = () => {
     if (ads.length === 0) return null;
 
     return (
-        <section className="w-full py-2 px-3 md:px-6 lg:px-8">
+        <section className="w-full py-1 px-1 md:px-6 lg:px-8">
             <div className="max-w-[1400px] mx-auto">
                 <Carousel
                     setApi={setEmblaApi}
