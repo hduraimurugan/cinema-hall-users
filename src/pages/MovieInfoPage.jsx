@@ -119,15 +119,23 @@ const MovieInfoPage = () => {
                 )}
 
                 {/* Dark gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/10 pointer-events-none" />
 
                 {/* Back button */}
                 <div className="absolute top-4 left-4 sm:left-6 lg:left-14 z-10">
-                    <button
+                    {/* <button
                         onClick={() => navigate('/movies')}
                         className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition bg-background/50 backdrop-blur-sm rounded-full px-3 py-1.5 text-sm"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button> */}
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-1.5 sm:p-2 bg-secondary rounded-md transition flex-shrink-0"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
