@@ -4,7 +4,31 @@ import { bookingAPI, settingsAPI, offersAPI } from '../services/api';
 import { useRazorpayPayment } from '../hooks/useRazorpayPayment';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
-import { Tag, X, CheckCircle, Loader2 } from 'lucide-react';
+import {
+    Tag, X, CheckCircle, Loader2, ChevronLeft, Clock,
+    Calendar, MapPin, Ticket, CreditCard, Wallet, Building2,
+    Shield, Lock, Percent, Film, Armchair,
+} from 'lucide-react';
+
+/* ── Payment method pill ── */
+const PaymentPill = ({ icon, label }) => (
+    <div className="flex items-center gap-1.5 bg-secondary/60 border border-border rounded-md px-2.5 py-1.5">
+        {icon}
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+    </div>
+);
+
+/* ── Price row ── */
+const PriceRow = ({ label, sub, value, highlight, icon }) => (
+    <div className={`flex justify-between items-center text-sm ${highlight ? 'text-emerald-500' : ''}`}>
+        <span className={`flex items-center gap-1.5 ${highlight ? '' : 'text-muted-foreground'}`}>
+            {icon && <span className="opacity-70">{icon}</span>}
+            {label}
+            {sub && <span className="text-xs opacity-60 ml-0.5">{sub}</span>}
+        </span>
+        <span className={highlight ? 'font-semibold' : ''}>{value}</span>
+    </div>
+);
 
 const OrderSummaryPage = () => {
     const navigate = useNavigate();
@@ -13,13 +37,13 @@ const OrderSummaryPage = () => {
     const { initiatePayment } = useRazorpayPayment();
 
     const [timeLeft, setTimeLeft] = useState(null);
+    const [isUrgent, setIsUrgent] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [convenienceFeePerTicket, setConvenienceFeePerTicket] = useState(null);
     const [gstPercentage, setGstPercentage] = useState(null);
 
-    // Coupon state
     const [couponInput, setCouponInput] = useState('');
-    const [appliedOffer, setAppliedOffer] = useState(null); // { discount_amount, offer_title, offer_code, offer_id }
+    const [appliedOffer, setAppliedOffer] = useState(null);
     const [couponError, setCouponError] = useState(null);
     const [isValidating, setIsValidating] = useState(false);
 
@@ -51,14 +75,14 @@ const OrderSummaryPage = () => {
                 const minutes = Math.floor(diff / 60000);
                 const seconds = Math.floor((diff % 60000) / 1000);
                 setTimeLeft(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+                setIsUrgent(diff < 60000);
             }
         }, 1000);
         return () => clearInterval(interval);
     }, [state?.holdExpiry, navigate, state?.showId]);
 
     const handleApplyCoupon = async () => {
-        if (!couponInput.trim()) return;
-        if (!settingsLoaded) return;
+        if (!couponInput.trim() || !settingsLoaded) return;
         setCouponError(null);
         setIsValidating(true);
         try {
@@ -82,25 +106,15 @@ const OrderSummaryPage = () => {
         }
     };
 
-    const handleRemoveCoupon = () => {
-        setAppliedOffer(null);
-        setCouponError(null);
-    };
+    const handleRemoveCoupon = () => { setAppliedOffer(null); setCouponError(null); };
 
     const handleCancel = async () => {
-        try {
-            await bookingAPI.releaseSeats(state.showId, state.selectedSeats);
-        } catch (error) {
-            console.error('Failed to release seats:', error);
-        }
+        try { await bookingAPI.releaseSeats(state.showId, state.selectedSeats); } catch { /* silent */ }
         navigate(`/show/${state.showId}`, { replace: true });
     };
 
     const handlePay = async () => {
-        if (!customer) {
-            toast.error('Please login to continue');
-            return;
-        }
+        if (!customer) { toast.error('Please login to continue'); return; }
         try {
             setIsProcessing(true);
             const result = await initiatePayment({
@@ -115,17 +129,11 @@ const OrderSummaryPage = () => {
             const reason = error?.message === 'Payment cancelled by user' ? 'cancelled' : 'failed';
             navigate('/booking/failure', {
                 state: {
-                    reason,
-                    showId: state.showId,
-                    selectedSeats: state.selectedSeats,
-                    seatLabels: state.seatLabels,
-                    holdExpiry: state.holdExpiry,
-                    totalAmount: state.totalAmount,
-                    movieTitle: state.movieTitle,
-                    cinemaName: state.cinemaName,
-                    showDate: state.showDate,
-                    startTime: state.startTime,
-                    language: state.language,
+                    reason, showId: state.showId, selectedSeats: state.selectedSeats,
+                    seatLabels: state.seatLabels, holdExpiry: state.holdExpiry,
+                    totalAmount: state.totalAmount, movieTitle: state.movieTitle,
+                    cinemaName: state.cinemaName, showDate: state.showDate,
+                    startTime: state.startTime, language: state.language,
                     screenType: state.screenType,
                 },
             });
@@ -139,7 +147,6 @@ const OrderSummaryPage = () => {
     const numTickets = state.selectedSeats.length;
     const seatDisplay = state.seatLabels?.join(', ') || state.selectedSeats.join(', ');
 
-    // Show loading state while settings are fetching
     const settingsLoaded = convenienceFeePerTicket !== null && gstPercentage !== null;
     const convenienceTotal = settingsLoaded ? numTickets * convenienceFeePerTicket : 0;
     const gstAmount = settingsLoaded ? +(convenienceTotal * (gstPercentage / 100)).toFixed(2) : 0;
@@ -149,213 +156,306 @@ const OrderSummaryPage = () => {
 
     return (
         <div className="min-h-screen bg-background">
-            {/* Header */}
-            <div className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
+
+            {/* ── Sticky header ── */}
+            <div className="bg-card/80 backdrop-blur border-b border-border sticky top-0 z-10">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-3 flex items-center gap-3">
                     <button
                         onClick={handleCancel}
                         disabled={isProcessing}
-                        className="p-2 hover:bg-secondary rounded-md transition flex-shrink-0"
+                        className="p-1.5 hover:bg-secondary rounded-lg transition flex-shrink-0"
+                        aria-label="Go back"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ChevronLeft className="w-5 h-5" />
                     </button>
+
                     <div className="flex-1 min-w-0">
-                        <h1 className="text-sm sm:text-base font-semibold truncate">{state.movieTitle}</h1>
-                        <p className="text-xs text-muted-foreground truncate">
-                            {state.cinemaName} &bull; {state.showDate} &bull; {state.startTime}
+                        <h1 className="text-sm sm:text-base font-semibold truncate flex items-center gap-1.5">
+                            <Film className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                            {state.movieTitle}
+                        </h1>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            <span className="inline-flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />{state.cinemaName}
+                            </span>
+                            <span className="mx-1.5 opacity-40">·</span>
+                            <span className="inline-flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />{state.showDate}
+                            </span>
+                            <span className="mx-1.5 opacity-40">·</span>
+                            <span className="inline-flex items-center gap-1">
+                                <Clock className="w-3 h-3" />{state.startTime}
+                            </span>
                         </p>
                     </div>
+
                     {timeLeft && (
-                        <div className="flex-shrink-0 flex items-center gap-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 text-xs font-semibold px-3 py-1.5 rounded-full">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                        <div className={`flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+                            isUrgent
+                                ? 'bg-red-100 dark:bg-red-900/40 text-red-500 animate-pulse'
+                                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600'
+                        }`}>
+                            <Clock className="w-3.5 h-3.5" />
                             {timeLeft}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Body */}
+            {/* ── Body ── */}
             <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-6">
                 <div className="flex flex-col lg:flex-row gap-6 items-start max-w-4xl mx-auto lg:max-w-none">
 
-                    {/* Left: Razorpay payment panel */}
-                    <div className="w-full lg:w-[55%] bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-                        <div className="px-5 py-4 border-b border-border">
-                            <h2 className="text-base font-semibold">Payment</h2>
-                        </div>
+                    {/* ════ LEFT: Payment panel ════ */}
+                    <div className="w-full lg:w-[55%] space-y-4">
 
-                        <div className="px-5 py-6">
-                            {/* Razorpay branding */}
-                            <div className="flex items-center gap-3 p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 mb-6">
-                                <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
+                        {/* Razorpay card */}
+                        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+                            <div className="px-5 pt-5 pb-4 border-b border-border flex items-center gap-2">
+                                <Lock className="w-4 h-4 text-emerald-500" />
+                                <h2 className="text-sm font-semibold">Secure Payment</h2>
+                            </div>
+
+                            <div className="px-5 py-5 space-y-5">
+
+                                {/* Razorpay branding */}
+                                <div className="relative overflow-hidden flex items-center gap-4 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/30">
+                                    {/* Decorative circle */}
+                                    <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-blue-400/10 pointer-events-none" />
+                                    <div className="absolute -right-2 -bottom-4 w-14 h-14 rounded-full bg-indigo-400/10 pointer-events-none" />
+
+                                    {/* Razorpay icon */}
+                                    <div className="w-12 h-12 rounded-xl bg-[#2F80ED] flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/30">
+                                        <svg className="h-7 w-7" viewBox="0 0 28 32" fill="none">
+                                            <path d="M15.5 0L6 17h7L9 32 26 12.5h-8L24 0H15.5Z" fill="white" />
+                                        </svg>
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <span className="text-sm font-bold text-[#2F80ED]">razorpay</span>
+                                            <span className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">PCI-DSS</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            256-bit SSL encrypted &amp; secure checkout
+                                        </p>
+                                    </div>
                                 </div>
+
+                                {/* Payment method chips */}
                                 <div>
-                                    <p className="text-sm font-semibold">Secure Payment via Razorpay</p>
-                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                        UPI, Cards, Wallets, Net Banking &amp; more
+                                    <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Accepted payment methods</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        <PaymentPill icon={<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M2 10h20" stroke="currentColor" strokeWidth="1.5"/></svg>} label="Cards" />
+                                        <PaymentPill
+                                            icon={
+                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                                                    <path d="M12 2L4 6v6c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V6l-8-4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                                                    <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                            }
+                                            label="UPI"
+                                        />
+                                        <PaymentPill icon={<Wallet className="w-4 h-4" />} label="Wallets" />
+                                        <PaymentPill icon={<Building2 className="w-4 h-4" />} label="Net Banking" />
+                                        <PaymentPill icon={<CreditCard className="w-4 h-4" />} label="EMI" />
+                                    </div>
+                                </div>
+
+                                {/* Coupon / Offer Code */}
+                                <div>
+                                    <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                                        <Tag className="w-3.5 h-3.5 text-violet-500" />
+                                        Coupon / Offer Code
+                                    </p>
+
+                                    {appliedOffer ? (
+                                        <div className="flex items-center justify-between gap-2 px-3.5 py-3 rounded-xl border border-emerald-500/40 bg-emerald-500/8 dark:bg-emerald-500/10">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className="w-7 h-7 rounded-full bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                                                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-mono font-bold text-sm text-emerald-500">{appliedOffer.offer_code}</p>
+                                                    <p className="text-xs text-muted-foreground">₹{appliedOffer.discount_amount} discount applied</p>
+                                                </div>
+                                            </div>
+                                            <button onClick={handleRemoveCoupon} className="text-muted-foreground hover:text-foreground transition p-1 rounded-lg hover:bg-secondary flex-shrink-0">
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1.5">
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
+                                                    <input
+                                                        type="text"
+                                                        value={couponInput}
+                                                        onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null); }}
+                                                        onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                                                        placeholder="Enter offer code"
+                                                        className="w-full bg-secondary/50 border border-border rounded-xl pl-8 pr-3 py-2.5 text-sm font-mono uppercase placeholder:normal-case placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/60 transition"
+                                                        disabled={isValidating || !settingsLoaded}
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={handleApplyCoupon}
+                                                    disabled={!couponInput.trim() || isValidating || !settingsLoaded}
+                                                    className="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 active:bg-violet-800 disabled:opacity-50 text-white text-sm font-semibold transition flex items-center gap-1.5 shadow-sm shadow-violet-500/30"
+                                                >
+                                                    {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                                                </button>
+                                            </div>
+                                            {couponError && (
+                                                <p className="text-xs text-red-400 flex items-center gap-1">
+                                                    <X className="w-3 h-3" />{couponError}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Amount to pay summary */}
+                                <div className="rounded-xl bg-gradient-to-r from-secondary/60 to-secondary/40 border border-border px-4 py-3.5 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Total amount to pay</p>
+                                        <p className="text-xl font-bold mt-0.5">
+                                            {settingsLoaded ? `₹${grandTotal.toLocaleString('en-IN')}` : <span className="text-muted-foreground animate-pulse">Loading...</span>}
+                                        </p>
+                                    </div>
+                                    {appliedOffer && (
+                                        <div className="text-right">
+                                            <p className="text-xs text-muted-foreground line-through">₹{subtotal.toLocaleString('en-IN')}</p>
+                                            <p className="text-xs text-emerald-500 font-semibold">−₹{discountAmount} saved</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Pay button */}
+                                <button
+                                    onClick={handlePay}
+                                    disabled={isProcessing || !settingsLoaded}
+                                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 active:from-blue-700 active:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2"
+                                >
+                                    {isProcessing ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Lock className="w-4 h-4" />
+                                            {settingsLoaded ? `Pay ₹${grandTotal.toLocaleString('en-IN')}` : 'Loading...'}
+                                        </>
+                                    )}
+                                </button>
+
+                                {/* Trust row */}
+                                <div className="flex items-center justify-center gap-4 pt-1">
+                                    <div className="flex items-center gap-1 text-muted-foreground">
+                                        <Shield className="w-3.5 h-3.5 text-emerald-500" />
+                                        <span className="text-xs">100% Secure</span>
+                                    </div>
+                                    <div className="w-px h-3 bg-border" />
+                                    <p className="text-xs text-muted-foreground text-center">
+                                        By proceeding, I consent to complete this transaction.
                                     </p>
                                 </div>
                             </div>
-
-                            {/* Coupon / Offer Code */}
-                            <div className="mb-5">
-                                <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                                    <Tag className="w-3.5 h-3.5 text-violet-500" /> Coupon / Offer Code
-                                </p>
-                                {appliedOffer ? (
-                                    <div className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10">
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                                            <div className="min-w-0">
-                                                <span className="font-mono font-bold text-sm text-emerald-500">{appliedOffer.offer_code}</span>
-                                                <span className="text-xs text-muted-foreground ml-2">— ₹{appliedOffer.discount_amount} off</span>
-                                            </div>
-                                        </div>
-                                        <button onClick={handleRemoveCoupon} className="text-muted-foreground hover:text-foreground transition flex-shrink-0 p-0.5">
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-1.5">
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={couponInput}
-                                                onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null); }}
-                                                onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
-                                                placeholder="Enter offer code"
-                                                className="flex-1 bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm font-mono uppercase placeholder:normal-case placeholder:font-sans focus:outline-none focus:ring-1 focus:ring-violet-500/50"
-                                                disabled={isValidating || !settingsLoaded}
-                                            />
-                                            <button
-                                                onClick={handleApplyCoupon}
-                                                disabled={!couponInput.trim() || isValidating || !settingsLoaded}
-                                                className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold transition flex items-center gap-1.5"
-                                            >
-                                                {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
-                                            </button>
-                                        </div>
-                                        {couponError && (
-                                            <p className="text-xs text-red-400">{couponError}</p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Amount summary */}
-                            <div className="rounded-lg bg-secondary/40 px-4 py-3 mb-6 flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Amount to pay</span>
-                                <span className="text-xl font-bold">
-                                    {settingsLoaded ? `₹${grandTotal.toLocaleString('en-IN')}` : '...'}
-                                </span>
-                            </div>
-
-                            {/* Pay button */}
-                            <button
-                                onClick={handlePay}
-                                disabled={isProcessing || !settingsLoaded}
-                                className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white py-3.5 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2"
-                            >
-                                {isProcessing ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Processing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
-                                        {settingsLoaded ? `Pay ₹${grandTotal.toLocaleString('en-IN')}` : 'Loading...'}
-                                    </>
-                                )}
-                            </button>
-
-                            <p className="text-xs text-muted-foreground text-center mt-3">
-                                By proceeding, I express my consent to complete this transaction.
-                            </p>
                         </div>
                     </div>
 
-                    {/* Right: Order Summary */}
-                    <div className="w-full lg:w-[45%] bg-card rounded-xl border border-border overflow-hidden shadow-sm lg:sticky lg:top-20">
-                        {/* Movie info */}
-                        <div className="px-5 py-4 border-b border-border">
-                            <div className="flex justify-between items-start gap-2">
+                    {/* ════ RIGHT: Order Summary ════ */}
+                    <div className="w-full lg:w-[45%] bg-card rounded-2xl border border-border overflow-hidden shadow-sm lg:sticky lg:top-20">
+
+                        {/* Header */}
+                        <div className="px-5 py-4 border-b border-border bg-gradient-to-r from-violet-500/5 to-blue-500/5">
+                            <div className="flex justify-between items-start gap-3">
                                 <div className="min-w-0">
-                                    <h3 className="font-semibold text-base truncate">{state.movieTitle}</h3>
-                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                        {state.showDate} &bull; {state.startTime}
+                                    <h3 className="font-bold text-base truncate flex items-center gap-1.5">
+                                        <Film className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                                        {state.movieTitle}
+                                    </h3>
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />{state.showDate}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />{state.startTime}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-0.5 opacity-80">
+                                        {state.language} &bull; {state.screenType}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">{state.language} ({state.screenType})</p>
                                 </div>
-                                <span className="text-sm font-bold bg-secondary px-2 py-0.5 rounded flex-shrink-0">
-                                    {numTickets} {numTickets === 1 ? 'Ticket' : 'Tickets'}
-                                </span>
+                                <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                                    <span className="text-xs font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                        <Ticket className="w-3 h-3" />
+                                        {numTickets} {numTickets === 1 ? 'Ticket' : 'Tickets'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Seats */}
-                        <div className="px-5 py-3 border-b border-border">
-                            <p className="text-xs text-muted-foreground mb-1">Seats</p>
-                            <p className="text-sm font-medium">{seatDisplay}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{state.cinemaName}</p>
+                        {/* Seat info */}
+                        <div className="px-5 py-3.5 border-b border-border">
+                            <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1">
+                                <Armchair className="w-3 h-3" /> Seats
+                            </p>
+                            <p className="text-sm font-semibold font-mono tracking-wide">{seatDisplay}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />{state.cinemaName}
+                            </p>
                         </div>
 
                         {/* Price breakdown */}
-                        <div className="px-5 py-4 space-y-2.5">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Ticket(s) price</span>
-                                <span>₹{state.totalAmount.toLocaleString('en-IN')}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">
-                                    Convenience fees
-                                    {settingsLoaded && (
-                                        <span className="text-xs ml-1 opacity-60">(₹{convenienceFeePerTicket}/ticket)</span>
-                                    )}
-                                </span>
-                                <span>{settingsLoaded ? `₹${convenienceTotal.toLocaleString('en-IN')}` : '...'}</span>
-                            </div>
+                        <div className="px-5 py-4 space-y-3">
+                            <PriceRow
+                                label="Ticket(s) price"
+                                value={`₹${state.totalAmount.toLocaleString('en-IN')}`}
+                                icon={<Ticket className="w-3.5 h-3.5" />}
+                            />
+                            <PriceRow
+                                label="Convenience fee"
+                                sub={settingsLoaded ? `(₹${convenienceFeePerTicket}/ticket)` : ''}
+                                value={settingsLoaded ? `₹${convenienceTotal.toLocaleString('en-IN')}` : '...'}
+                                icon={<CreditCard className="w-3.5 h-3.5" />}
+                            />
                             {settingsLoaded && gstAmount > 0 && (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">
-                                        GST
-                                        <span className="text-xs ml-1 opacity-60">({gstPercentage}% on conv. fee)</span>
-                                    </span>
-                                    <span>₹{gstAmount.toLocaleString('en-IN')}</span>
-                                </div>
+                                <PriceRow
+                                    label="GST"
+                                    sub={`(${gstPercentage}% on conv. fee)`}
+                                    value={`₹${gstAmount.toLocaleString('en-IN')}`}
+                                    icon={<Percent className="w-3.5 h-3.5" />}
+                                />
                             )}
                             {appliedOffer && (
-                                <div className="flex justify-between text-sm text-emerald-500">
-                                    <span className="flex items-center gap-1">
-                                        <Tag className="w-3 h-3" />
-                                        Discount
-                                        <span className="text-xs font-mono">({appliedOffer.offer_code})</span>
-                                    </span>
-                                    <span>−₹{appliedOffer.discount_amount.toLocaleString('en-IN')}</span>
-                                </div>
+                                <PriceRow
+                                    label="Discount"
+                                    sub={`(${appliedOffer.offer_code})`}
+                                    value={`−₹${appliedOffer.discount_amount.toLocaleString('en-IN')}`}
+                                    highlight
+                                    icon={<Tag className="w-3.5 h-3.5" />}
+                                />
                             )}
-                            <div className="border-t border-border pt-2.5 flex justify-between font-semibold">
-                                <span>Amount Payable</span>
-                                <span>{settingsLoaded ? `₹${grandTotal.toLocaleString('en-IN')}` : '...'}</span>
+
+                            <div className="border-t border-border pt-3 flex justify-between items-center">
+                                <span className="font-bold text-sm">Amount Payable</span>
+                                <span className="font-bold text-lg">
+                                    {settingsLoaded ? `₹${grandTotal.toLocaleString('en-IN')}` : '...'}
+                                </span>
                             </div>
                         </div>
 
-                        <div className="px-5 pb-4">
+                        {/* Cancel link */}
+                        <div className="px-5 pb-4 border-t border-border pt-3">
                             <button
                                 onClick={handleCancel}
                                 disabled={isProcessing}
-                                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition"
+                                className="text-xs text-muted-foreground hover:text-red-400 underline underline-offset-2 transition flex items-center gap-1"
                             >
-                                Cancel and release seats
+                                <X className="w-3 h-3" /> Cancel and release seats
                             </button>
                         </div>
                     </div>
