@@ -94,6 +94,7 @@ const SeatSelectionPage = () => {
                         screenName: showData.screen?.name,
                         screenType: showData.screen?.screen_type || '2D',
                         cinemaName: showData.cinema_hall?.name || showData.screen?.name,
+                        posterUrl: showData.movie?.poster_url,
                     }
                 });
             }

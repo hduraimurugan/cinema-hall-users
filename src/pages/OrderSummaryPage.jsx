@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import {
     Tag, X, CheckCircle, Loader2, ChevronLeft, Clock,
     Calendar, MapPin, Ticket, CreditCard, Wallet, Building2,
-    Shield, Lock, Percent, Film, Armchair, ChevronDown, ChevronUp,
+    Shield, Lock, Percent, Armchair, ChevronDown, ChevronUp,
     AlertCircle, Sparkles,
 } from 'lucide-react';
 
@@ -289,9 +289,14 @@ const OrderSummaryPage = () => {
                         <ChevronLeft className="w-5 h-5" />
                     </button>
 
+                    {state.posterUrl && (
+                        <div className="h-14 w-10 rounded overflow-hidden flex-shrink-0 bg-muted border border-border">
+                            <img src={state.posterUrl} alt={state.movieTitle} className="w-full h-full object-cover" />
+                        </div>
+                    )}
+
                     <div className="flex-1 min-w-0">
-                        <h1 className="text-sm sm:text-base font-semibold truncate flex items-center gap-1.5">
-                            <Film className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                        <h1 className="text-sm sm:text-base font-semibold truncate">
                             {state.movieTitle}
                         </h1>
                         <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -554,10 +559,16 @@ const OrderSummaryPage = () => {
                         <div className="px-5 py-4 border-b border-border bg-gradient-to-r from-violet-500/5 to-blue-500/5">
                             <div className="flex justify-between items-start gap-3">
                                 <div className="min-w-0">
-                                    <h3 className="font-bold text-base truncate flex items-center gap-1.5">
-                                        <Film className="w-4 h-4 text-violet-500 flex-shrink-0" />
-                                        {state.movieTitle}
-                                    </h3>
+                                    <div className="flex items-center gap-3 mb-1">
+                                        {state.posterUrl && (
+                                            <div className="h-16 w-11 rounded overflow-hidden flex-shrink-0 bg-muted border border-border">
+                                                <img src={state.posterUrl} alt={state.movieTitle} className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        <h3 className="font-bold text-base truncate">
+                                            {state.movieTitle}
+                                        </h3>
+                                    </div>
                                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
                                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                                             <Calendar className="w-3 h-3" />{state.showDate}
