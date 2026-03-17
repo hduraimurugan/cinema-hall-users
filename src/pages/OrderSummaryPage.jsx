@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { bookingAPI, settingsAPI } from '../services/api';
+import { bookingAPI, settingsAPI, offersAPI } from '../services/api';
 import { useRazorpayPayment } from '../hooks/useRazorpayPayment';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
+import { Tag, X, CheckCircle, Loader2 } from 'lucide-react';
 
 const OrderSummaryPage = () => {
     const navigate = useNavigate();
@@ -15,6 +16,12 @@ const OrderSummaryPage = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [convenienceFeePerTicket, setConvenienceFeePerTicket] = useState(null);
     const [gstPercentage, setGstPercentage] = useState(null);
+
+    // Coupon state
+    const [couponInput, setCouponInput] = useState('');
+    const [appliedOffer, setAppliedOffer] = useState(null); // { discount_amount, offer_title, offer_code, offer_id }
+    const [couponError, setCouponError] = useState(null);
+    const [isValidating, setIsValidating] = useState(false);
 
     useEffect(() => {
         if (!state?.showId) navigate('/movies', { replace: true });
@@ -49,6 +56,37 @@ const OrderSummaryPage = () => {
         return () => clearInterval(interval);
     }, [state?.holdExpiry, navigate, state?.showId]);
 
+    const handleApplyCoupon = async () => {
+        if (!couponInput.trim()) return;
+        if (!settingsLoaded) return;
+        setCouponError(null);
+        setIsValidating(true);
+        try {
+            const result = await offersAPI.validateOffer({
+                offer_code: couponInput.trim().toUpperCase(),
+                show_id: state.showId,
+                total_amount: state.totalAmount + convenienceTotal + gstAmount,
+            });
+            setAppliedOffer({
+                offer_id: result.offer_id,
+                offer_code: result.offer_code,
+                offer_title: result.offer_title,
+                discount_amount: result.discount_amount,
+            });
+            setCouponInput('');
+            toast.success(`"${result.offer_code}" applied — ₹${result.discount_amount} off!`);
+        } catch (err) {
+            setCouponError(err?.error || 'Invalid or ineligible offer code.');
+        } finally {
+            setIsValidating(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedOffer(null);
+        setCouponError(null);
+    };
+
     const handleCancel = async () => {
         try {
             await bookingAPI.releaseSeats(state.showId, state.selectedSeats);
@@ -69,6 +107,7 @@ const OrderSummaryPage = () => {
                 show_id: state.showId,
                 seats: state.selectedSeats,
                 customer,
+                offer_code: appliedOffer?.offer_code,
             });
             toast.success('Payment successful! Booking confirmed.');
             navigate(`/booking/success?payment_id=${result.booking.payment_id}`, { replace: true });
@@ -104,7 +143,9 @@ const OrderSummaryPage = () => {
     const settingsLoaded = convenienceFeePerTicket !== null && gstPercentage !== null;
     const convenienceTotal = settingsLoaded ? numTickets * convenienceFeePerTicket : 0;
     const gstAmount = settingsLoaded ? +(convenienceTotal * (gstPercentage / 100)).toFixed(2) : 0;
-    const grandTotal = state.totalAmount + convenienceTotal + gstAmount;
+    const subtotal = state.totalAmount + convenienceTotal + gstAmount;
+    const discountAmount = appliedOffer?.discount_amount ?? 0;
+    const grandTotal = +(subtotal - discountAmount).toFixed(2);
 
     return (
         <div className="min-h-screen bg-background">
@@ -161,6 +202,51 @@ const OrderSummaryPage = () => {
                                         UPI, Cards, Wallets, Net Banking &amp; more
                                     </p>
                                 </div>
+                            </div>
+
+                            {/* Coupon / Offer Code */}
+                            <div className="mb-5">
+                                <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                                    <Tag className="w-3.5 h-3.5 text-violet-500" /> Coupon / Offer Code
+                                </p>
+                                {appliedOffer ? (
+                                    <div className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                            <div className="min-w-0">
+                                                <span className="font-mono font-bold text-sm text-emerald-500">{appliedOffer.offer_code}</span>
+                                                <span className="text-xs text-muted-foreground ml-2">— ₹{appliedOffer.discount_amount} off</span>
+                                            </div>
+                                        </div>
+                                        <button onClick={handleRemoveCoupon} className="text-muted-foreground hover:text-foreground transition flex-shrink-0 p-0.5">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1.5">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={couponInput}
+                                                onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null); }}
+                                                onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                                                placeholder="Enter offer code"
+                                                className="flex-1 bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm font-mono uppercase placeholder:normal-case placeholder:font-sans focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+                                                disabled={isValidating || !settingsLoaded}
+                                            />
+                                            <button
+                                                onClick={handleApplyCoupon}
+                                                disabled={!couponInput.trim() || isValidating || !settingsLoaded}
+                                                className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold transition flex items-center gap-1.5"
+                                            >
+                                                {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                                            </button>
+                                        </div>
+                                        {couponError && (
+                                            <p className="text-xs text-red-400">{couponError}</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Amount summary */}
@@ -245,6 +331,16 @@ const OrderSummaryPage = () => {
                                         <span className="text-xs ml-1 opacity-60">({gstPercentage}% on conv. fee)</span>
                                     </span>
                                     <span>₹{gstAmount.toLocaleString('en-IN')}</span>
+                                </div>
+                            )}
+                            {appliedOffer && (
+                                <div className="flex justify-between text-sm text-emerald-500">
+                                    <span className="flex items-center gap-1">
+                                        <Tag className="w-3 h-3" />
+                                        Discount
+                                        <span className="text-xs font-mono">({appliedOffer.offer_code})</span>
+                                    </span>
+                                    <span>−₹{appliedOffer.discount_amount.toLocaleString('en-IN')}</span>
                                 </div>
                             )}
                             <div className="border-t border-border pt-2.5 flex justify-between font-semibold">

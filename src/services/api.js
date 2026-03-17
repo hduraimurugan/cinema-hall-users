@@ -293,12 +293,12 @@ export const settingsAPI = {
 // ✅ Payment API (Razorpay integration)
 export const paymentAPI = {
   // Create Razorpay order - amount is calculated server-side
-  createOrder: async (show_id, seats) => {
+  createOrder: async (show_id, seats, offer_code) => {
     const response = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ show_id, seats })
+      body: JSON.stringify({ show_id, seats, ...(offer_code ? { offer_code } : {}) })
     });
     if (!response.ok) throw await response.json();
     return response.json();
@@ -336,6 +336,28 @@ export const adsAPI = {
     return response.json()
   },
 }
+
+// ✅ Offers API
+export const offersAPI = {
+  getActive: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/offers/active`, {
+      credentials: 'include',
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  validateOffer: async ({ offer_code, show_id, total_amount }) => {
+    const response = await fetch(`${API_BASE_URL}/api/offers/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ offer_code, show_id, total_amount }),
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+};
 
 // ✅ Shows API (Get show details with seat layout)
 export const showsAPI = {
