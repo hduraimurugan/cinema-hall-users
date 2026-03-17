@@ -1,8 +1,18 @@
-import { Outlet } from "react-router-dom"
+import { useEffect, useRef } from "react"
+import { Outlet, useLocation } from "react-router-dom"
 import { TopBar } from "./TopBar"
 import { TopNavbar } from "./TopNavbar"
 
 export function CinemaLayout() {
+  const mainRef = useRef(null)
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }, [pathname])
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Top Bar */}
@@ -12,7 +22,7 @@ export function CinemaLayout() {
       <TopNavbar />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto min-h-0">
+      <main ref={mainRef} className="flex-1 overflow-y-auto min-h-0">
         <div className="min-h-full flex flex-col">
           <div className="flex-1 mb-20">
             <Outlet />
