@@ -7,7 +7,8 @@ import { toast } from 'sonner';
 import {
     Tag, X, CheckCircle, Loader2, ChevronLeft, Clock,
     Calendar, MapPin, Ticket, CreditCard, Wallet, Building2,
-    Shield, Lock, Percent, Film, Armchair,
+    Shield, Lock, Percent, Film, Armchair, ChevronDown, ChevronUp,
+    AlertCircle, Sparkles,
 } from 'lucide-react';
 
 /* ── Payment method pill ── */
@@ -30,6 +31,104 @@ const PriceRow = ({ label, sub, value, highlight, icon }) => (
     </div>
 );
 
+/* ── Offer discount label ── */
+const discountLabel = (offer) => {
+    if (offer.discount_type === 'fixed') return `₹${offer.discount_value} OFF`;
+    const pct = `${offer.discount_value}% OFF`;
+    return offer.max_discount_amount ? `${pct} upto ₹${offer.max_discount_amount}` : pct;
+};
+
+/* ── Format expiry date ── */
+const fmtExpiry = (iso) =>
+    new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+/* ── Single offer card ── */
+const OfferCard = ({ offer, isApplicable, neededMore, isApplied, onApply, isValidating, appliedOfferCode }) => {
+    const isCurrentlyApplied = isApplied && appliedOfferCode === offer.code;
+
+    return (
+        <div
+            className={`relative rounded-xl border transition-all overflow-hidden
+                ${isCurrentlyApplied
+                    ? 'border-emerald-500/50 bg-emerald-500/5'
+                    : isApplicable
+                        ? 'border-violet-500/30 bg-violet-500/5 hover:border-violet-500/60 hover:bg-violet-500/8 cursor-pointer'
+                        : 'border-border bg-secondary/20 opacity-50 cursor-not-allowed'
+                }
+            `}
+            onClick={() => isApplicable && !isCurrentlyApplied && !isValidating && onApply(offer.code)}
+        >
+            {/* Coloured left accent bar */}
+            <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl
+                ${isCurrentlyApplied ? 'bg-emerald-500' : isApplicable ? 'bg-violet-500' : 'bg-border'}
+            `} />
+
+            <div className="pl-4 pr-3 py-3 flex items-start gap-3">
+                {/* Discount badge */}
+                <div className={`flex-shrink-0 rounded-lg px-2 py-1 text-center min-w-[64px]
+                    ${isCurrentlyApplied
+                        ? 'bg-emerald-500/15 text-emerald-500'
+                        : isApplicable
+                            ? 'bg-violet-500/15 text-violet-600 dark:text-violet-400'
+                            : 'bg-secondary text-muted-foreground'
+                    }
+                `}>
+                    <p className="text-[11px] font-black leading-tight tracking-tight whitespace-nowrap">
+                        {discountLabel(offer)}
+                    </p>
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                        <span className="font-mono font-bold text-xs tracking-wider">{offer.code}</span>
+                        {offer.scope === 'hall' && (
+                            <span className="text-[10px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full">
+                                Hall Offer
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-xs font-medium truncate">{offer.title}</p>
+                    {offer.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{offer.description}</p>
+                    )}
+
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        {offer.min_booking_amount > 0 && (
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                                <AlertCircle className="w-3 h-3" />
+                                Min ₹{offer.min_booking_amount}
+                            </span>
+                        )}
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                            <Clock className="w-3 h-3" />
+                            Expires {fmtExpiry(offer.valid_until)}
+                        </span>
+                    </div>
+
+                    {!isApplicable && neededMore > 0 && (
+                        <p className="text-[10px] text-amber-500 mt-1 flex items-center gap-0.5 font-medium">
+                            <AlertCircle className="w-3 h-3" />
+                            Add ₹{neededMore.toLocaleString('en-IN')} more to unlock
+                        </p>
+                    )}
+                </div>
+
+                {/* Right action */}
+                <div className="flex-shrink-0 flex items-center self-center">
+                    {isCurrentlyApplied ? (
+                        <CheckCircle className="w-5 h-5 text-emerald-500" />
+                    ) : isApplicable ? (
+                        isValidating
+                            ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                            : <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Apply</span>
+                    ) : null}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const OrderSummaryPage = () => {
     const navigate = useNavigate();
     const { state } = useLocation();
@@ -47,6 +146,10 @@ const OrderSummaryPage = () => {
     const [couponError, setCouponError] = useState(null);
     const [isValidating, setIsValidating] = useState(false);
 
+    const [offers, setOffers] = useState([]);
+    const [offersLoading, setOffersLoading] = useState(true);
+    const [showAllOffers, setShowAllOffers] = useState(false);
+
     useEffect(() => {
         if (!state?.showId) navigate('/movies', { replace: true });
     }, [state, navigate]);
@@ -61,6 +164,13 @@ const OrderSummaryPage = () => {
                 setConvenienceFeePerTicket(15);
                 setGstPercentage(18);
             });
+    }, []);
+
+    useEffect(() => {
+        offersAPI.getActive()
+            .then(data => setOffers(data.offers ?? []))
+            .catch(() => setOffers([]))
+            .finally(() => setOffersLoading(false));
     }, []);
 
     useEffect(() => {
@@ -81,13 +191,13 @@ const OrderSummaryPage = () => {
         return () => clearInterval(interval);
     }, [state?.holdExpiry, navigate, state?.showId]);
 
-    const handleApplyCoupon = async () => {
-        if (!couponInput.trim() || !settingsLoaded) return;
+    const applyOffer = async (code) => {
+        if (!code || !settingsLoaded) return;
         setCouponError(null);
         setIsValidating(true);
         try {
             const result = await offersAPI.validateOffer({
-                offer_code: couponInput.trim().toUpperCase(),
+                offer_code: code.trim().toUpperCase(),
                 show_id: state.showId,
                 total_amount: state.totalAmount + convenienceTotal + gstAmount,
             });
@@ -106,6 +216,7 @@ const OrderSummaryPage = () => {
         }
     };
 
+    const handleApplyCoupon = () => applyOffer(couponInput.trim());
     const handleRemoveCoupon = () => { setAppliedOffer(null); setCouponError(null); };
 
     const handleCancel = async () => {
@@ -153,6 +264,15 @@ const OrderSummaryPage = () => {
     const subtotal = state.totalAmount + convenienceTotal + gstAmount;
     const discountAmount = appliedOffer?.discount_amount ?? 0;
     const grandTotal = +(subtotal - discountAmount).toFixed(2);
+
+    // Sort: applicable first, then ineligible
+    const sortedOffers = [...offers].sort((a, b) => {
+        const aOk = subtotal >= (a.min_booking_amount || 0);
+        const bOk = subtotal >= (b.min_booking_amount || 0);
+        return aOk === bOk ? 0 : aOk ? -1 : 1;
+    });
+    const visibleOffers = showAllOffers ? sortedOffers : sortedOffers.slice(0, 3);
+    const applicableCount = sortedOffers.filter(o => subtotal >= (o.min_booking_amount || 0)).length;
 
     return (
         <div className="min-h-screen bg-background">
@@ -206,10 +326,76 @@ const OrderSummaryPage = () => {
             <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-6">
                 <div className="flex flex-col lg:flex-row gap-6 items-start max-w-4xl mx-auto lg:max-w-none">
 
-                    {/* ════ LEFT: Payment panel ════ */}
+                    {/* ════ LEFT: Payment + Offers ════ */}
                     <div className="w-full lg:w-[55%] space-y-4">
 
-                        {/* Razorpay card */}
+                        {/* ── Offers panel ── */}
+                        {(offersLoading || offers.length > 0) && (
+                            <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+                                <div className="px-5 pt-4 pb-3 border-b border-border flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-violet-500" />
+                                        <h2 className="text-sm font-semibold">Available Offers</h2>
+                                        {!offersLoading && applicableCount > 0 && (
+                                            <span className="text-[10px] font-bold bg-violet-500/15 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full">
+                                                {applicableCount} applicable
+                                            </span>
+                                        )}
+                                    </div>
+                                    {!offersLoading && appliedOffer && (
+                                        <span className="text-xs text-emerald-500 font-medium flex items-center gap-1">
+                                            <CheckCircle className="w-3.5 h-3.5" /> Applied
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="px-4 py-4 space-y-2.5">
+                                    {offersLoading ? (
+                                        /* skeleton */
+                                        [1, 2].map(i => (
+                                            <div key={i} className="rounded-xl border border-border bg-secondary/20 h-20 animate-pulse" />
+                                        ))
+                                    ) : offers.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground text-center py-4">No offers available right now.</p>
+                                    ) : (
+                                        <>
+                                            {visibleOffers.map(offer => {
+                                                const minAmt = offer.min_booking_amount || 0;
+                                                const isApplicable = subtotal >= minAmt;
+                                                const neededMore = isApplicable ? 0 : +(minAmt - subtotal).toFixed(2);
+                                                return (
+                                                    <OfferCard
+                                                        key={offer.id}
+                                                        offer={offer}
+                                                        isApplicable={isApplicable}
+                                                        neededMore={neededMore}
+                                                        isApplied={!!appliedOffer}
+                                                        appliedOfferCode={appliedOffer?.offer_code}
+                                                        onApply={applyOffer}
+                                                        isValidating={isValidating}
+                                                    />
+                                                );
+                                            })}
+
+                                            {sortedOffers.length > 3 && (
+                                                <button
+                                                    onClick={() => setShowAllOffers(v => !v)}
+                                                    className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 pt-1 transition"
+                                                >
+                                                    {showAllOffers ? (
+                                                        <><ChevronUp className="w-3.5 h-3.5" /> Show less</>
+                                                    ) : (
+                                                        <><ChevronDown className="w-3.5 h-3.5" /> {sortedOffers.length - 3} more offers</>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ── Payment card ── */}
                         <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
                             <div className="px-5 pt-5 pb-4 border-b border-border flex items-center gap-2">
                                 <Lock className="w-4 h-4 text-emerald-500" />
@@ -220,11 +406,9 @@ const OrderSummaryPage = () => {
 
                                 {/* Razorpay branding */}
                                 <div className="relative overflow-hidden flex items-center gap-4 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/30">
-                                    {/* Decorative circle */}
                                     <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-blue-400/10 pointer-events-none" />
                                     <div className="absolute -right-2 -bottom-4 w-14 h-14 rounded-full bg-indigo-400/10 pointer-events-none" />
 
-                                    {/* Razorpay icon */}
                                     <div className="w-12 h-12 rounded-xl bg-[#2F80ED] flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/30">
                                         <svg className="h-7 w-7" viewBox="0 0 28 32" fill="none">
                                             <path d="M15.5 0L6 17h7L9 32 26 12.5h-8L24 0H15.5Z" fill="white" />
@@ -270,7 +454,7 @@ const OrderSummaryPage = () => {
                                     </p>
 
                                     {appliedOffer ? (
-                                        <div className="flex items-center justify-between gap-2 px-3.5 py-3 rounded-xl border border-emerald-500/40 bg-emerald-500/8 dark:bg-emerald-500/10">
+                                        <div className="flex items-center justify-between gap-2 px-3.5 py-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5">
                                             <div className="flex items-center gap-2.5 min-w-0">
                                                 <div className="w-7 h-7 rounded-full bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
                                                     <CheckCircle className="w-4 h-4 text-emerald-500" />
@@ -316,12 +500,15 @@ const OrderSummaryPage = () => {
                                     )}
                                 </div>
 
-                                {/* Amount to pay summary */}
+                                {/* Amount to pay */}
                                 <div className="rounded-xl bg-gradient-to-r from-secondary/60 to-secondary/40 border border-border px-4 py-3.5 flex items-center justify-between">
                                     <div>
                                         <p className="text-xs text-muted-foreground">Total amount to pay</p>
                                         <p className="text-xl font-bold mt-0.5">
-                                            {settingsLoaded ? `₹${grandTotal.toLocaleString('en-IN')}` : <span className="text-muted-foreground animate-pulse">Loading...</span>}
+                                            {settingsLoaded
+                                                ? `₹${grandTotal.toLocaleString('en-IN')}`
+                                                : <span className="text-muted-foreground animate-pulse">Loading...</span>
+                                            }
                                         </p>
                                     </div>
                                     {appliedOffer && (
@@ -339,15 +526,9 @@ const OrderSummaryPage = () => {
                                     className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 active:from-blue-700 active:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2"
                                 >
                                     {isProcessing ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Processing...
-                                        </>
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
                                     ) : (
-                                        <>
-                                            <Lock className="w-4 h-4" />
-                                            {settingsLoaded ? `Pay ₹${grandTotal.toLocaleString('en-IN')}` : 'Loading...'}
-                                        </>
+                                        <><Lock className="w-4 h-4" />{settingsLoaded ? `Pay ₹${grandTotal.toLocaleString('en-IN')}` : 'Loading...'}</>
                                     )}
                                 </button>
 
@@ -389,12 +570,10 @@ const OrderSummaryPage = () => {
                                         {state.language} &bull; {state.screenType}
                                     </p>
                                 </div>
-                                <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                                    <span className="text-xs font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 px-2.5 py-1 rounded-full flex items-center gap-1">
-                                        <Ticket className="w-3 h-3" />
-                                        {numTickets} {numTickets === 1 ? 'Ticket' : 'Tickets'}
-                                    </span>
-                                </div>
+                                <span className="text-xs font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 px-2.5 py-1 rounded-full flex items-center gap-1 flex-shrink-0">
+                                    <Ticket className="w-3 h-3" />
+                                    {numTickets} {numTickets === 1 ? 'Ticket' : 'Tickets'}
+                                </span>
                             </div>
                         </div>
 
