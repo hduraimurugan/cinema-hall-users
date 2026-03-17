@@ -73,12 +73,23 @@ const OrderSummaryPage = () => {
             toast.success('Payment successful! Booking confirmed.');
             navigate(`/booking/success?payment_id=${result.booking.payment_id}`, { replace: true });
         } catch (error) {
-            if (error?.message === 'Payment cancelled by user') {
-                toast.info('Payment cancelled.');
-            } else {
-                console.error('Payment failed:', error);
-                toast.error('Payment failed. Please try again.');
-            }
+            const reason = error?.message === 'Payment cancelled by user' ? 'cancelled' : 'failed';
+            navigate('/booking/failure', {
+                state: {
+                    reason,
+                    showId: state.showId,
+                    selectedSeats: state.selectedSeats,
+                    seatLabels: state.seatLabels,
+                    holdExpiry: state.holdExpiry,
+                    totalAmount: state.totalAmount,
+                    movieTitle: state.movieTitle,
+                    cinemaName: state.cinemaName,
+                    showDate: state.showDate,
+                    startTime: state.startTime,
+                    language: state.language,
+                    screenType: state.screenType,
+                },
+            });
         } finally {
             setIsProcessing(false);
         }

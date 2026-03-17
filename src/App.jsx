@@ -12,6 +12,7 @@ import MovieDetailsPage from './pages/MovieDetailsPage.jsx';
 import MovieInfoPage from './pages/MovieInfoPage.jsx';
 import SeatSelectionPage from './pages/SeatSelectionPage.jsx';
 import BookingSuccessPage from './pages/BookingSuccessPage.jsx';
+import BookingFailurePage from './pages/BookingFailurePage.jsx';
 import OrderSummaryPage from './pages/OrderSummaryPage.jsx';
 import { ProtectedRoute } from './routes/ProtectedRoutes.jsx';
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/show/:showId" element={<SeatSelectionPage />} />
             <Route path="/order-summary" element={<OrderSummaryPage />} />
             <Route path="/booking/success" element={<BookingSuccessPage />} />
+            <Route path="/booking/failure" element={<BookingFailurePage />} />
             <Route path="/theatres" element={<TheatresPage />} />
             <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
