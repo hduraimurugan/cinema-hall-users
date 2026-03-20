@@ -90,15 +90,26 @@ const OffersPage = () => {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {offers.map(offer => (
-                            <div key={offer.id} className="rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                key={offer.id}
+                                className={`rounded-xl border overflow-hidden shadow-sm transition-shadow ${
+                                    offer.is_redeemed
+                                        ? 'border-border bg-card opacity-60'
+                                        : 'border-border bg-card hover:shadow-md'
+                                }`}
+                            >
                                 {/* Top color band */}
-                                <div className="h-1.5 bg-gradient-to-r from-violet-500 to-purple-600" />
+                                <div className={`h-1.5 ${offer.is_redeemed ? 'bg-muted' : 'bg-gradient-to-r from-violet-500 to-purple-600'}`} />
 
                                 <div className="p-5">
-                                    {/* Title + expiry badge */}
+                                    {/* Title + badges */}
                                     <div className="flex items-start justify-between gap-2 mb-3">
                                         <h3 className="font-semibold text-base leading-tight">{offer.title}</h3>
-                                        {isExpiringSoon(offer.valid_until) && (
+                                        {offer.is_redeemed ? (
+                                            <span className="flex-shrink-0 flex items-center gap-1 text-xs bg-green-500/15 text-green-400 border border-green-500/25 px-2 py-0.5 rounded-full font-medium">
+                                                <Check className="w-3 h-3" /> Applied
+                                            </span>
+                                        ) : isExpiringSoon(offer.valid_until) && (
                                             <span className="flex-shrink-0 flex items-center gap-1 text-xs bg-amber-500/15 text-amber-400 border border-amber-500/25 px-2 py-0.5 rounded-full font-medium">
                                                 <Clock className="w-3 h-3" /> Ending soon
                                             </span>
@@ -106,7 +117,7 @@ const OffersPage = () => {
                                     </div>
 
                                     {/* Discount value */}
-                                    <div className="text-2xl font-bold text-violet-500 mb-2">
+                                    <div className={`text-2xl font-bold mb-2 ${offer.is_redeemed ? 'text-muted-foreground' : 'text-violet-500'}`}>
                                         {formatDiscount(offer)}
                                     </div>
 
@@ -141,22 +152,31 @@ const OffersPage = () => {
                                         )}
                                     </div>
 
-                                    {/* Code + Copy button */}
-                                    <button
-                                        onClick={() => handleCopy(offer.code)}
-                                        className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-dashed border-violet-500/40 bg-violet-500/5 hover:bg-violet-500/10 transition-colors group"
-                                    >
-                                        <span className="font-mono font-bold text-sm tracking-widest text-violet-500">
-                                            {offer.code}
-                                        </span>
-                                        <span className="flex items-center gap-1 text-xs text-violet-500 font-medium">
-                                            {copiedCode === offer.code ? (
-                                                <><Check className="w-3.5 h-3.5" /> Copied!</>
-                                            ) : (
-                                                <><Copy className="w-3.5 h-3.5" /> Copy</>
-                                            )}
-                                        </span>
-                                    </button>
+                                    {/* Code row */}
+                                    {offer.is_redeemed ? (
+                                        <div className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-dashed border-border bg-secondary/30">
+                                            <span className="font-mono font-bold text-sm tracking-widest text-muted-foreground line-through">
+                                                {offer.code}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground font-medium">Already used</span>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleCopy(offer.code)}
+                                            className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-dashed border-violet-500/40 bg-violet-500/5 hover:bg-violet-500/10 transition-colors group"
+                                        >
+                                            <span className="font-mono font-bold text-sm tracking-widest text-violet-500">
+                                                {offer.code}
+                                            </span>
+                                            <span className="flex items-center gap-1 text-xs text-violet-500 font-medium">
+                                                {copiedCode === offer.code ? (
+                                                    <><Check className="w-3.5 h-3.5" /> Copied!</>
+                                                ) : (
+                                                    <><Copy className="w-3.5 h-3.5" /> Copy</>
+                                                )}
+                                            </span>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
