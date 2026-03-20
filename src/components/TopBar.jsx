@@ -16,6 +16,7 @@ import { useCustomerAuth } from "../context/CustomerAuthContext"
 import { useTheme } from "../context/ThemeContext"
 import { LoginModal } from "./LoginModal"
 import { LocationModal } from "./LocationModal"
+import SearchMovies from "./SearchMovies"
 
 const mockNotifications = [
     { id: 1, title: "Booking confirmed — Thaai Kizhavi", time: "2 min ago", unread: true },
@@ -25,7 +26,6 @@ const mockNotifications = [
 
 export function TopBar() {
     const [searchValue, setSearchValue] = useState("")
-    const [isSearchFocused, setIsSearchFocused] = useState(false)
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
     const [loginOpen, setLoginOpen] = useState(false)
     const [locationOpen, setLocationOpen] = useState(false)
@@ -99,20 +99,7 @@ export function TopBar() {
                         </Link>
 
                         {/* Desktop search bar */}
-                        <div className="hidden sm:flex flex-1 max-w-xl mx-4">
-                            <form onSubmit={handleSearch} className="relative w-full">
-                                <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors duration-200 ${isSearchFocused ? "text-primary" : "text-muted-foreground"}`} />
-                                <Input
-                                    type="search"
-                                    placeholder="Search movies, events, shows..."
-                                    className="pl-10 h-9 rounded-full bg-secondary/50 border-transparent focus-visible:border-primary/30 focus-visible:ring-primary/20 text-sm transition-all duration-200"
-                                    value={searchValue}
-                                    onChange={(e) => setSearchValue(e.target.value)}
-                                    onFocus={() => setIsSearchFocused(true)}
-                                    onBlur={() => setIsSearchFocused(false)}
-                                />
-                            </form>
-                        </div>
+                        <SearchMovies />
 
                         {/* Right controls */}
                         <div className="flex items-center gap-0.5 sm:gap-1">
