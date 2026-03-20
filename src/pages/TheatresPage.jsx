@@ -253,7 +253,7 @@ const TheatresPage = () => {
                                                             }, {})
                                                         ).map(([screenName, shows]) => (
                                                             <div key={screenName} className="flex items-start gap-3 flex-wrap">
-                                                                <span className="text-xs text-muted-foreground w-24 shrink-0 pt-2.5">{screenName}</span>
+                                                                {/* <span className="text-xs text-muted-foreground w-24 shrink-0 pt-2.5">{screenName}</span> */}
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {[...shows]
                                                                         .sort((a, b) => a.start_time.localeCompare(b.start_time))
@@ -261,16 +261,14 @@ const TheatresPage = () => {
                                                                             <button
                                                                                 key={show.show_id}
                                                                                 onClick={() => navigate(`/show/${show.show_id}`)}
-                                                                                className="flex flex-col items-center justify-center px-3 py-2 min-w-[76px] border border-green-500 rounded-lg text-green-700 dark:text-green-400 hover:border-primary hover:text-primary transition-colors duration-150"
+                                                                                className="flex flex-col items-center justify-center px-3 py-2 min-w-[76px] border border-green-500 rounded-lg text-green-700 dark:text-green-400 hover:border-primary hover:text-primary transition-colors duration-150 cursor-pointer"
                                                                             >
                                                                                 <span className="font-bold text-xs leading-tight">
                                                                                     {show.start_time ? formatTime(show.start_time) : '--:--'}
                                                                                 </span>
-                                                                                {show.language_version && (
-                                                                                    <span className="text-[10px] text-muted-foreground leading-tight mt-0.5 max-w-[68px] truncate">
-                                                                                        {show.language_version}
-                                                                                    </span>
-                                                                                )}
+                                                                                <span className="text-[10px] text-muted-foreground leading-tight mt-0.5 text-center">
+                                                                                    {show.screen_name} · {show.language_version}
+                                                                                </span>
                                                                             </button>
                                                                         ))
                                                                     }

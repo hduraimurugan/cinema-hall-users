@@ -328,13 +328,13 @@ const MovieDetailsPage = () => {
                                                     <button
                                                         key={show.show_id}
                                                         onClick={() => navigate(`/show/${show.show_id}`)}
-                                                        className="flex flex-col items-center justify-center px-4 py-2 min-w-[88px] border border-green-500 rounded-lg text-green-700 dark:text-green-400 hover:border-primary hover:text-primary transition-colors duration-150"
+                                                        className="flex flex-col items-center justify-center px-4 py-2 min-w-[88px] border border-green-500 rounded-lg text-green-700 dark:text-green-400 hover:border-primary hover:text-primary transition-colors duration-150 cursor-pointer"
                                                     >
                                                         <span className="font-bold text-sm leading-tight">
                                                             {show.start_time ? formatTime(show.start_time) : '--:--'}
                                                         </span>
-                                                        <span className="text-[10px] text-muted-foreground leading-tight mt-0.5 max-w-[80px] truncate">
-                                                            {show.screen_name}
+                                                        <span className="text-[10px] text-muted-foreground leading-tight mt-0.5 text-center">
+                                                            {show.screen_name} · {show.language_version}
                                                         </span>
                                                     </button>
                                                 ))
