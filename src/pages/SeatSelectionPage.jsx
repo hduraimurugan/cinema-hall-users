@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { showsAPI, bookingAPI } from '../services/api';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
 import { LoginModal } from '../components/LoginModal';
+import { Hand, MousePointer2, ZoomIn, ZoomOut } from 'lucide-react';
 
 const SeatSelectionPage = () => {
     const { showId } = useParams();
@@ -15,6 +16,22 @@ const SeatSelectionPage = () => {
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
     const [loginOpen, setLoginOpen] = useState(false);
+    const [isPanMode, setIsPanMode] = useState(false);
+    const [isDraggingActive, setIsDraggingActive] = useState(false);
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const [zoom, setZoom] = useState(1);
+
+    const MIN_ZOOM = 0.5;
+    const MAX_ZOOM = 1.5;
+    const ZOOM_STEP = 0.1;
+
+    const scrollContainerRef = useRef(null);
+    const contentDivRef = useRef(null);
+    const minimapCanvasRef = useRef(null);
+    const isDraggingRef = useRef(false);
+    const dragStartXRef = useRef(0);
+    const dragStartScrollLeftRef = useRef(0);
+    const isMinimapDraggingRef = useRef(false);
 
     useEffect(() => {
         fetchShowDetails();
@@ -56,7 +73,18 @@ const SeatSelectionPage = () => {
         }).filter(Boolean);
     };
 
+    const togglePanMode = useCallback(() => {
+        setIsPanMode(prev => {
+            if (prev) {
+                isDraggingRef.current = false;
+                setIsDraggingActive(false);
+            }
+            return !prev;
+        });
+    }, []);
+
     const toggleSeat = (seat) => {
+        if (isPanMode) return;
         if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') return;
         setSelectedSeats(prev =>
             prev.includes(seat.id) ? prev.filter(id => id !== seat.id) : [...prev, seat.id]
@@ -131,6 +159,243 @@ const SeatSelectionPage = () => {
             silver: seats.filter(seat => seat.type === 'silver'),
         };
     };
+
+    // Build a Map<seatId, {x, y}> from layout data — mirrors renderSeatSection layout math
+    const seatPositionMap = useMemo(() => {
+        if (!showData?.screen?.layout?.seats) return new Map();
+        const map = new Map();
+        const seats = showData.screen.layout.seats;
+        const aisleAfterColumns = showData.screen.layout.aisleAfterColumns || [];
+        const aisleAfterRows = showData.screen.layout.aisleAfterRows || [];
+
+        const SEAT_W = 28, SEAT_GAP = 4, ROW_LABEL_W = 28;
+        const AISLE_COL_W = 16, AISLE_ROW_H = 12, ROW_H = 34;
+        const SECTION_TITLE_H = 40, SECTION_MB = 40;
+        const PAD_X = 32; // px-8 on inner div
+
+        let yOffset = 0;
+        ['premium', 'gold', 'silver'].forEach((type) => {
+            const sectionSeats = seats.filter(s => s.type === type);
+            if (!sectionSeats.length) return;
+
+            yOffset += SECTION_TITLE_H;
+
+            const byRow = {};
+            sectionSeats.forEach(seat => {
+                const row = seat.seat_label?.charAt(0) || 'A';
+                if (!byRow[row]) byRow[row] = [];
+                byRow[row].push(seat);
+            });
+
+            Object.keys(byRow).sort().forEach((row) => {
+                const rowSeats = byRow[row].sort((a, b) =>
+                    parseInt(a.seat_label?.slice(1) || '0') - parseInt(b.seat_label?.slice(1) || '0')
+                );
+
+                let xOffset = PAD_X + ROW_LABEL_W + SEAT_GAP;
+                rowSeats.forEach((seat) => {
+                    map.set(seat.id, { x: xOffset, y: yOffset });
+                    const colNum = parseInt(seat.seat_label?.slice(1) || '0');
+                    xOffset += SEAT_W + SEAT_GAP;
+                    if (aisleAfterColumns.includes(colNum)) xOffset += AISLE_COL_W;
+                });
+
+                yOffset += ROW_H;
+                if (aisleAfterRows.includes(row)) yOffset += AISLE_ROW_H;
+            });
+
+            yOffset += SECTION_MB;
+        });
+
+        return map;
+    }, [showData]);
+
+    const MINIMAP_W = 300;
+    const MINIMAP_H = 200;
+    const SEAT_W_PX = 28;
+    const SEAT_H_PX = 28;
+
+    const drawMinimap = useCallback(() => {
+        const canvas = minimapCanvasRef.current;
+        const scrollEl = scrollContainerRef.current;
+        const contentEl = contentDivRef.current;
+        if (!canvas || !scrollEl || !contentEl || !showData) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        const ctx = canvas.getContext('2d');
+        const logicalW = MINIMAP_W;
+        const logicalH = MINIMAP_H;
+
+        const contentW = contentEl.scrollWidth;
+        const contentH = contentEl.scrollHeight;
+        const scaleX = logicalW / contentW;
+        const scaleY = logicalH / contentH;
+
+        ctx.save();
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Background
+        const isDark = document.documentElement.classList.contains('dark');
+        ctx.fillStyle = isDark ? '#18181b' : '#f4f4f5';
+        ctx.fillRect(0, 0, logicalW, logicalH);
+
+        // Seats
+        const allSeats = showData.screen?.layout?.seats || [];
+        allSeats.forEach(seat => {
+            if (seat.type === 'passage' || seat.isBlocked || seat.status === 'blocked') return;
+            const pos = seatPositionMap.get(seat.id);
+            if (!pos) return;
+
+            const mx = pos.x * scaleX;
+            const my = pos.y * scaleY;
+            const mw = Math.max(SEAT_W_PX * scaleX, 1.5);
+            const mh = Math.max(SEAT_H_PX * scaleY, 1.5);
+
+            if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') {
+                ctx.fillStyle = '#52525b';
+            } else if (selectedSeats.includes(seat.id)) {
+                ctx.fillStyle = '#10b981';
+            } else if (seat.type === 'premium') {
+                ctx.fillStyle = '#f59e0b';
+            } else if (seat.type === 'gold') {
+                ctx.fillStyle = '#facc15';
+            } else {
+                ctx.fillStyle = '#9ca3af';
+            }
+            ctx.fillRect(mx, my, mw, mh);
+        });
+
+        // Viewport rectangle
+        const vpLeft = scrollEl.scrollLeft * scaleX;
+        const vpTop = scrollEl.scrollTop * scaleY;
+        const vpW = scrollEl.clientWidth * scaleX;
+        const vpH = scrollEl.clientHeight * scaleY;
+
+        ctx.fillStyle = 'rgba(147, 197, 253, 0.15)';
+        ctx.fillRect(vpLeft, vpTop, vpW, vpH);
+        ctx.strokeStyle = 'rgba(147, 197, 253, 0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(vpLeft, vpTop, vpW, vpH);
+
+        ctx.restore();
+    }, [showData, selectedSeats, seatPositionMap]);
+
+    // --- Pan handlers ---
+    const handlePanMouseDown = useCallback((e) => {
+        if (!isPanMode || e.button !== 0) return;
+        isDraggingRef.current = true;
+        dragStartXRef.current = e.clientX;
+        dragStartScrollLeftRef.current = scrollContainerRef.current?.scrollLeft || 0;
+        setIsDraggingActive(true);
+        e.preventDefault();
+    }, [isPanMode]);
+
+    const handlePanMouseMove = useCallback((e) => {
+        if (!isDraggingRef.current) return;
+        const dx = e.clientX - dragStartXRef.current;
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollLeft = dragStartScrollLeftRef.current - dx;
+        }
+        drawMinimap();
+    }, [drawMinimap]);
+
+    const handlePanMouseUp = useCallback(() => {
+        isDraggingRef.current = false;
+        setIsDraggingActive(false);
+    }, []);
+
+    // --- Minimap click/drag handlers ---
+    const handleMinimapInteraction = useCallback((e, smooth = true) => {
+        const canvas = minimapCanvasRef.current;
+        const scrollEl = scrollContainerRef.current;
+        const contentEl = contentDivRef.current;
+        if (!canvas || !scrollEl || !contentEl) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        const scaleX = MINIMAP_W / contentEl.scrollWidth;
+        const scaleY = MINIMAP_H / contentEl.scrollHeight;
+
+        scrollEl.scrollTo({
+            left: Math.max(0, (clickX / scaleX) - scrollEl.clientWidth / 2),
+            top: Math.max(0, (clickY / scaleY) - scrollEl.clientHeight / 2),
+            behavior: smooth ? 'smooth' : 'instant',
+        });
+    }, []);
+
+    const handleMinimapMouseDown = useCallback((e) => {
+        isMinimapDraggingRef.current = true;
+        handleMinimapInteraction(e, false);
+    }, [handleMinimapInteraction]);
+
+    const handleMinimapMouseMove = useCallback((e) => {
+        if (!isMinimapDraggingRef.current) return;
+        handleMinimapInteraction(e, false);
+    }, [handleMinimapInteraction]);
+
+    const handleMinimapMouseUp = useCallback(() => {
+        isMinimapDraggingRef.current = false;
+    }, []);
+
+    // --- Effects ---
+
+    // HiDPI canvas setup — runs when canvas mounts (tied to isOverflowing)
+    useEffect(() => {
+        if (!isOverflowing) return;
+        const canvas = minimapCanvasRef.current;
+        if (!canvas) return;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = MINIMAP_W * dpr;
+        canvas.height = MINIMAP_H * dpr;
+        canvas.style.width = `${MINIMAP_W}px`;
+        canvas.style.height = `${MINIMAP_H}px`;
+    }, [isOverflowing]);
+
+    // Overflow detection
+    useEffect(() => {
+        const scrollEl = scrollContainerRef.current;
+        if (!scrollEl) return;
+        const check = () => setIsOverflowing(scrollEl.scrollWidth > scrollEl.clientWidth);
+        check();
+        const observer = new ResizeObserver(check);
+        observer.observe(scrollEl);
+        return () => observer.disconnect();
+    }, [showData]);
+
+    // Attach pan listeners to document while pan mode is active
+    useEffect(() => {
+        if (!isPanMode) return;
+        document.addEventListener('mousemove', handlePanMouseMove);
+        document.addEventListener('mouseup', handlePanMouseUp);
+        return () => {
+            document.removeEventListener('mousemove', handlePanMouseMove);
+            document.removeEventListener('mouseup', handlePanMouseUp);
+        };
+    }, [isPanMode, handlePanMouseMove, handlePanMouseUp]);
+
+    // Redraw minimap on scroll
+    useEffect(() => {
+        const scrollEl = scrollContainerRef.current;
+        if (!scrollEl || !isOverflowing) return;
+        scrollEl.addEventListener('scroll', drawMinimap, { passive: true });
+        return () => scrollEl.removeEventListener('scroll', drawMinimap);
+    }, [isOverflowing, drawMinimap]);
+
+    // Redraw minimap when data, selection, or zoom changes
+    useEffect(() => {
+        if (!isOverflowing) return;
+        const raf = requestAnimationFrame(() => drawMinimap());
+        return () => cancelAnimationFrame(raf);
+    }, [showData, selectedSeats, isOverflowing, zoom, drawMinimap]);
+
+    // Recheck overflow when zoom changes (scrollWidth shifts with CSS zoom)
+    useEffect(() => {
+        const scrollEl = scrollContainerRef.current;
+        if (!scrollEl) return;
+        setIsOverflowing(scrollEl.scrollWidth > scrollEl.clientWidth);
+    }, [zoom]);
 
     const renderSeatSection = (seats, sectionTitle, price) => {
         if (!seats.length) return null;
@@ -293,30 +558,77 @@ const SeatSelectionPage = () => {
             <div className="py-4 sm:py-6 px-2 sm:px-4 lg:px-14">
                 <div className="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl sm:rounded-2xl overflow-hidden">
 
-                    {/* Legend */}
-                    <div className="flex justify-center gap-5 sm:gap-8 pt-5 pb-2 text-[11px] sm:text-xs text-gray-500 dark:text-zinc-400">
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm border border-gray-400 dark:border-zinc-500" />
-                            <span>Available</span>
+                    {/* Legend + pan toggle */}
+                    <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-2">
+                        <div className="flex gap-5 sm:gap-8 text-[11px] sm:text-xs text-gray-500 dark:text-zinc-400">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm border border-gray-400 dark:border-zinc-500" />
+                                <span>Available</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm bg-gray-300 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-700" />
+                                <span>Sold</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm bg-emerald-500" />
+                                <span>Selected</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm bg-gray-300 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-700" />
-                            <span>Sold</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm bg-emerald-500" />
-                            <span>Selected</span>
-                        </div>
+                        <button
+                            onClick={togglePanMode}
+                            title={isPanMode ? 'Switch to Select mode' : 'Switch to Pan mode'}
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors duration-150 flex-shrink-0 ${
+                                isPanMode
+                                    ? 'bg-blue-500/15 border-blue-500/50 text-blue-400'
+                                    : 'bg-transparent border-gray-300 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 hover:border-gray-500 dark:hover:border-zinc-500'
+                            }`}
+                        >
+                            {isPanMode
+                                ? <Hand className="w-3.5 h-3.5" />
+                                : <MousePointer2 className="w-3.5 h-3.5" />
+                            }
+                            <span className="hidden sm:inline">{isPanMode ? 'Pan' : 'Select'}</span>
+                        </button>
                     </div>
 
-                    {/* Scrollable seat grid — scrolls horizontally on small screens */}
-                    <div className="overflow-x-auto overflow-y-visible pb-6 pt-2">
-                        <div className="w-max mx-auto px-4 sm:px-8">
-                            {screenPosition === 'top' ? (
-                                <>{screenIndicator}{seatLayout}</>
-                            ) : (
-                                <>{seatLayout}{screenIndicator}</>
-                            )}
+                    {/* Scrollable seat grid + floating zoom buttons */}
+                    <div className="relative">
+                        {/* Zoom controls — floating on the right edge */}
+                        <div className="absolute right-3 bottom-8 z-10 hidden sm:flex flex-col gap-1.5">
+                            <button
+                                onClick={() => setZoom(z => Math.min(MAX_ZOOM, parseFloat((z + ZOOM_STEP).toFixed(1))))}
+                                disabled={zoom >= MAX_ZOOM}
+                                title="Zoom in"
+                                className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                            >
+                                <ZoomIn className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => setZoom(z => Math.max(MIN_ZOOM, parseFloat((z - ZOOM_STEP).toFixed(1))))}
+                                disabled={zoom <= MIN_ZOOM}
+                                title="Zoom out"
+                                className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                            >
+                                <ZoomOut className="w-4 h-4" />
+                            </button>
+                            <div className="text-center text-[10px] text-gray-400 dark:text-zinc-500 select-none">
+                                {Math.round(zoom * 100)}%
+                            </div>
+                        </div>
+
+                        <div
+                            ref={scrollContainerRef}
+                            className="overflow-x-auto overflow-y-visible pb-6 pt-2"
+                            style={{ cursor: isPanMode ? (isDraggingActive ? 'grabbing' : 'grab') : 'default' }}
+                            onMouseDown={handlePanMouseDown}
+                        >
+                            <div ref={contentDivRef} className="w-max mx-auto px-4 sm:px-8" style={{ zoom }}>
+                                {screenPosition === 'top' ? (
+                                    <>{screenIndicator}{seatLayout}</>
+                                ) : (
+                                    <>{seatLayout}{screenIndicator}</>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -341,6 +653,24 @@ const SeatSelectionPage = () => {
                             {isProcessing ? 'Processing...' : 'Proceed to Payment'}
                         </button>
                     </div>
+                </div>
+            )}
+
+            {/* Fixed minimap panel — top-right, below sticky header, desktop only */}
+            {isOverflowing && (
+                <div className="fixed top-[72px] right-3 z-30 hidden sm:flex flex-col rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-xl bg-white dark:bg-zinc-900">
+                    <div className="px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-gray-400 dark:text-zinc-500 border-b border-gray-100 dark:border-zinc-800 select-none">
+                        Layout Overview
+                    </div>
+                    <canvas
+                        ref={minimapCanvasRef}
+                        style={{ width: `${MINIMAP_W}px`, height: `${MINIMAP_H}px`, imageRendering: 'pixelated' }}
+                        className="block cursor-crosshair"
+                        onMouseDown={handleMinimapMouseDown}
+                        onMouseMove={handleMinimapMouseMove}
+                        onMouseUp={handleMinimapMouseUp}
+                        onMouseLeave={handleMinimapMouseUp}
+                    />
                 </div>
             )}
 
