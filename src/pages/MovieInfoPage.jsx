@@ -199,6 +199,23 @@ const MovieInfoPage = () => {
                                     </span>
                                 </>
                             )}
+                            {movie.vote_average !== undefined && parseFloat(movie.vote_average) > 0 && (
+                                <>
+                                    <span className="text-muted-foreground/50">•</span>
+                                    <span className="flex items-center gap-1 text-sm font-medium text-yellow-400">
+                                        <svg className="w-4 h-4 fill-yellow-400" viewBox="0 0 24 24">
+                                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                        </svg>
+                                        {parseFloat(movie.vote_average).toFixed(1)}
+                                        <span className="text-muted-foreground font-normal">/ 10</span>
+                                        {movie.vote_count > 0 && (
+                                            <span className="text-muted-foreground font-normal">
+                                                · {movie.vote_count >= 1000 ? `${(movie.vote_count / 1000).toFixed(0)}K` : movie.vote_count} Votes
+                                            </span>
+                                        )}
+                                    </span>
+                                </>
+                            )}
                         </div>
 
                         {/* Format + Language badges */}
@@ -236,6 +253,40 @@ const MovieInfoPage = () => {
                             <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
                                 {movie.description}
                             </p>
+                        </div>
+                    )}
+
+                    {/* Cast Section */}
+                    {movie.cast && movie.cast.length > 0 && (
+                        <div className="py-8 border-b border-border">
+                            <h2 className="text-lg font-bold text-foreground mb-5">Cast</h2>
+                            <div className="flex flex-wrap gap-5">
+                                {movie.cast.map((member, index) => (
+                                    <div key={index} className="flex flex-col items-center text-center w-20">
+                                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border shadow-md mb-2 bg-muted flex-shrink-0">
+                                            {member.profile_path ? (
+                                                <img
+                                                    src={`https://image.tmdb.org/t/p/w185${member.profile_path}`}
+                                                    alt={member.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.currentTarget.style.display = 'none';
+                                                        e.currentTarget.nextSibling.style.display = 'flex';
+                                                    }}
+                                                />
+                                            ) : null}
+                                            <div
+                                                className="w-full h-full items-center justify-center bg-muted text-muted-foreground text-lg font-bold"
+                                                style={{ display: member.profile_path ? 'none' : 'flex' }}
+                                            >
+                                                {member.name.charAt(0)}
+                                            </div>
+                                        </div>
+                                        <span className="text-xs font-semibold text-foreground leading-tight">{member.name}</span>
+                                        <span className="text-xs text-muted-foreground leading-tight mt-0.5">{member.character}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
 
