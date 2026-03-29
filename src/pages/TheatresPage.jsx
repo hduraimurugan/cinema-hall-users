@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { customerMoviesAPI } from '../services/api';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
+import { LocationModal } from '../components/LocationModal';
 
 const TheatresPage = () => {
     const navigate = useNavigate();
@@ -11,6 +12,7 @@ const TheatresPage = () => {
     const [cinemaHalls, setCinemaHalls] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [locationModalOpen, setLocationModalOpen] = useState(false);
 
     useEffect(() => {
         if (district && state) {
@@ -67,16 +69,25 @@ const TheatresPage = () => {
 
     if (!district || !state) {
         return (
-            <div className="min-h-screen bg-background">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-16 text-center">
-                    <svg className="w-16 h-16 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <h2 className="text-2xl font-bold mb-2">Set Your Location</h2>
-                    <p className="text-muted-foreground">Please set your location to see theatres near you.</p>
+            <>
+                <div className="min-h-screen bg-background">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-16 text-center">
+                        <svg className="w-16 h-16 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <h2 className="text-2xl font-bold mb-2">Set Your Location</h2>
+                        <p className="text-muted-foreground">Please set your location to see theatres near you.</p>
+                        <button
+                            onClick={() => setLocationModalOpen(true)}
+                            className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors text-sm mt-5"
+                        >
+                            Select City
+                        </button>
+                    </div>
                 </div>
-            </div>
+                <LocationModal open={locationModalOpen} onOpenChange={setLocationModalOpen} />
+            </>
         );
     }
 
