@@ -260,15 +260,20 @@ const MovieInfoPage = () => {
                     {movie.cast && movie.cast.length > 0 && (
                         <div className="py-8 border-b border-border">
                             <h2 className="text-lg font-bold text-foreground mb-5">Cast</h2>
-                            <div className="flex flex-wrap gap-5">
-                                {movie.cast.map((member, index) => (
-                                    <div key={index} className="flex flex-col items-center text-center w-20">
-                                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border shadow-md mb-2 bg-muted flex-shrink-0">
-                                            {member.profile_path ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                {movie.cast.map((member, index) => {
+                                    const imgSrc = member.profile_path
+                                        ? member.profile_path.startsWith('http')
+                                            ? member.profile_path
+                                            : `https://image.tmdb.org/t/p/w185${member.profile_path}`
+                                        : null;
+                                    return (
+                                        <div key={index} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-3 py-2.5 hover:border-border transition-colors">
+                                            {imgSrc ? (
                                                 <img
-                                                    src={`https://image.tmdb.org/t/p/w185${member.profile_path}`}
+                                                    src={imgSrc}
                                                     alt={member.name}
-                                                    className="w-full h-full object-cover"
+                                                    className="w-11 h-11 rounded-full object-cover shrink-0 shadow-sm"
                                                     onError={(e) => {
                                                         e.currentTarget.style.display = 'none';
                                                         e.currentTarget.nextSibling.style.display = 'flex';
@@ -276,16 +281,20 @@ const MovieInfoPage = () => {
                                                 />
                                             ) : null}
                                             <div
-                                                className="w-full h-full items-center justify-center bg-muted text-muted-foreground text-lg font-bold"
-                                                style={{ display: member.profile_path ? 'none' : 'flex' }}
+                                                className="w-11 h-11 rounded-full bg-muted shrink-0 items-center justify-center text-muted-foreground text-base font-bold"
+                                                style={{ display: imgSrc ? 'none' : 'flex' }}
                                             >
                                                 {member.name.charAt(0)}
                                             </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
+                                                {member.character && (
+                                                    <p className="text-xs text-muted-foreground truncate mt-0.5">{member.character}</p>
+                                                )}
+                                            </div>
                                         </div>
-                                        <span className="text-xs font-semibold text-foreground leading-tight">{member.name}</span>
-                                        <span className="text-xs text-muted-foreground leading-tight mt-0.5">{member.character}</span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
