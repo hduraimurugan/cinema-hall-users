@@ -397,6 +397,14 @@ const SeatSelectionPage = () => {
         setIsOverflowing(scrollEl.scrollWidth > scrollEl.clientWidth);
     }, [zoom]);
 
+     const formatTime = (timeString) => {
+        const [hours, minutes] = timeString.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${ampm}`;
+    };
+
     const renderSeatSection = (seats, sectionTitle, price) => {
         if (!seats.length) return null;
 
@@ -540,7 +548,7 @@ const SeatSelectionPage = () => {
                             </p>
                             <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                 <span className="bg-blue-600 text-white text-[11px] px-2 py-0.5 rounded font-medium">
-                                    {showData.show_details?.start_time}
+                                    {showData.show_details?.start_time ? formatTime(showData.show_details.start_time) : ''}
                                 </span>
                                 <span className="text-[11px] text-muted-foreground hidden sm:inline">
                                     {showData.show_details?.show_date}
