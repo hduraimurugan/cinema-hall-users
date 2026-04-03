@@ -243,8 +243,10 @@ const BookingDetailPage = () => {
                     {booking.language && (
                       <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>{booking.language}</span>
                     )}
-                    {booking.genre && (
-                      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>{booking.genre}</span>
+                    {booking.genre?.length > 0 && (
+                      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
+                        {Array.isArray(booking.genre) ? booking.genre.join(', ') : booking.genre}
+                      </span>
                     )}
                     {booking.duration_mins && (
                       <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>{booking.duration_mins} min</span>
