@@ -37,7 +37,7 @@ const BookingCard = ({ booking }) => {
       className="bg-card border border-border rounded-lg p-5 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
       onClick={() => navigate(`/bookings/${booking.id}`)}
     >
-      <div className="flex items-start justify-between gap-3 mb-4 pb-4 border-b border-border">
+      <div className="flex items-start justify-between gap-3 mb-4 pb-1 border-b border-border">
         <div>
           <p className="text-lg font-bold">{booking.movie_title}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-muted-foreground">
