@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Ticket, CalendarDays, Clock, MapPin, Monitor, QrCode } from 'lucide-react';
+import { Ticket, CalendarDays, Clock, MapPin, Monitor, QrCode, ExternalLink } from 'lucide-react';
 import { bookingAPI } from '../services/api';
 import { QRCodeSVG } from 'qrcode.react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -35,7 +35,7 @@ const BookingCard = ({ booking }) => {
   return (
     <div
       className="bg-card border border-border rounded-lg p-5 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
-      onClick={() => navigate(`/booking/success?payment_id=${booking.payment_id}`)}
+      onClick={() => navigate(`/bookings/${booking.id}`)}
     >
       <div className="flex items-start justify-between gap-3 mb-4 pb-4 border-b border-border">
         <div>
@@ -127,6 +127,15 @@ const BookingCard = ({ booking }) => {
               </div>
             </DialogContent>
           </Dialog>
+          {/* {booking.payment_id && booking.booking_status !== 'cancelled' && (
+            <button
+              onClick={e => { e.stopPropagation(); navigate(`/booking/success?payment_id=${booking.payment_id}`); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              View Ticket
+            </button>
+          )} */}
           <p className="text-xl font-bold">₹{booking.total_amount}</p>
         </div>
       </div>

@@ -16,6 +16,7 @@ import BookingFailurePage from './pages/BookingFailurePage.jsx';
 import OrderSummaryPage from './pages/OrderSummaryPage.jsx';
 import { ProtectedRoute } from './routes/ProtectedRoutes.jsx';
 import OffersPage from './pages/OffersPage.jsx';
+import BookingDetailPage from './pages/BookingDetailPage.jsx';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             <Route path="/offers" element={<OffersPage />} />
             <Route path="/theatres" element={<TheatresPage />} />
             <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+            <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetailPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 

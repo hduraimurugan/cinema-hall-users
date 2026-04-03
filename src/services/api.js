@@ -278,6 +278,14 @@ export const bookingAPI = {
     });
     if (!response.ok) throw await response.json();
     return response.json();
+  },
+
+  getBookingById: async (bookingId) => {
+    const response = await fetch(`${API_BASE_URL}/api/booking/${bookingId}`, {
+      credentials: "include",
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
   }
 };
 
