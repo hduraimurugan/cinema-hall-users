@@ -11,6 +11,21 @@ const statusColors = {
   completed: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
 };
 
+const refundBadgeConfig = {
+  initiated: {
+    label: 'Refund Initiated',
+    className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+  },
+  settled: {
+    label: 'Refund Settled',
+    className: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+  },
+  failed: {
+    label: 'Refund Failed',
+    className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+  },
+};
+
 const BookingCard = ({ booking }) => {
   const navigate = useNavigate();
   const showDate = new Date(booking.show_date);
@@ -50,9 +65,22 @@ const BookingCard = ({ booking }) => {
             )}
           </div>
         </div>
-        <span className={`shrink-0 inline-block px-3 py-1 text-xs font-semibold rounded-full ${statusColors[booking.booking_status] || statusColors.confirmed}`}>
-          {booking.booking_status?.charAt(0).toUpperCase() + booking.booking_status?.slice(1)}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          {booking.booking_status === 'cancelled' && booking.refund_status ? (
+            <>
+              <span className={`shrink-0 inline-block px-3 py-1 text-xs font-semibold rounded-full ${statusColors.cancelled}`}>
+                Cancelled
+              </span>
+              <span className={`shrink-0 inline-block px-3 py-1 text-xs font-semibold rounded-full ${refundBadgeConfig[booking.refund_status]?.className || ''}`}>
+                {refundBadgeConfig[booking.refund_status]?.label || booking.refund_status}
+              </span>
+            </>
+          ) : (
+            <span className={`shrink-0 inline-block px-3 py-1 text-xs font-semibold rounded-full ${statusColors[booking.booking_status] || statusColors.confirmed}`}>
+              {booking.booking_status?.charAt(0).toUpperCase() + booking.booking_status?.slice(1)}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="mb-4">
