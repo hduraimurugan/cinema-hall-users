@@ -100,6 +100,19 @@ const BookingCard = ({ booking }) => {
           <p className="text-sm font-mono font-semibold">{booking.id?.substring(0, 8)}</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={e => {
+              e.stopPropagation()
+              const url = booking.cinema_hall_latitude && booking.cinema_hall_longitude
+                ? `https://www.google.com/maps/dir/?api=1&destination=${booking.cinema_hall_latitude},${booking.cinema_hall_longitude}`
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((booking.cinema_hall_name || '') + ' ' + (booking.cinema_hall_location || ''))}`
+              window.open(url, '_blank', 'noopener,noreferrer')
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+          >
+            <MapPin className="w-3.5 h-3.5" />
+            Directions
+          </button>
           <Dialog>
             <DialogTrigger asChild>
               <button

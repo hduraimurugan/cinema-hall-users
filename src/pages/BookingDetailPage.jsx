@@ -369,16 +369,30 @@ const BookingDetailPage = () => {
           </div>
         </div>
 
-        {/* ── Download Ticket (only for non-cancelled) ── */}
-        {booking.booking_status !== 'cancelled' && (
+        {/* ── Action buttons ── */}
+        <div className="flex gap-3">
           <button
-            onClick={handleDownloadTicket}
-            className="w-full flex items-center justify-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-5 py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity shadow-sm"
+            onClick={() => {
+              const url = booking.cinema_hall_latitude && booking.cinema_hall_longitude
+                ? `https://www.google.com/maps/dir/?api=1&destination=${booking.cinema_hall_latitude},${booking.cinema_hall_longitude}`
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((booking.cinema_hall_name || '') + ' ' + (booking.cinema_hall_location || ''))}`
+              window.open(url, '_blank', 'noopener,noreferrer')
+            }}
+            className="flex-1 flex items-center justify-center gap-2 border border-primary/40 text-primary px-5 py-3.5 rounded-xl font-semibold text-sm hover:bg-primary/10 transition-colors"
           >
-            <Download className="w-4 h-4" />
-            Download Ticket
+            <MapPin className="w-4 h-4" />
+            Get Directions
           </button>
-        )}
+          {booking.booking_status !== 'cancelled' && (
+            <button
+              onClick={handleDownloadTicket}
+              className="flex-1 flex items-center justify-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-5 py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              Download Ticket
+            </button>
+          )}
+        </div>
 
         {/* ── Price breakdown ── */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
