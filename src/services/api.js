@@ -86,25 +86,76 @@ export const customerAuthAPI = {
     return response.json()
   },
 
-  // ✅ Send OTP
-  sendOtp: async (email) => {
+  // ✅ Send OTP (type: 'signup' | 'password_reset')
+  sendOtp: async (email, type = 'signup') => {
     const response = await fetch(`${API_BASE_URL}/api/otp/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, type }),
     })
-    if (!response.ok) throw new Error("Failed to send OTP")
+    if (!response.ok) {
+      const data = await response.json().catch(() => null)
+      throw new Error(data?.error || 'Failed to send OTP')
+    }
     return response.json()
   },
 
-  // ✅ Verify OTP
-  verifyOtp: async (email, otp) => {
+  // ✅ Verify OTP (type: 'signup' | 'password_reset')
+  verifyOtp: async (email, otp, type = 'signup') => {
     const response = await fetch(`${API_BASE_URL}/api/otp/verify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, otp }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, type }),
     })
-    if (!response.ok) throw new Error("Failed to verify OTP")
+    if (!response.ok) {
+      const data = await response.json().catch(() => null)
+      throw new Error(data?.error || 'Failed to verify OTP')
+    }
+    return response.json()
+  },
+
+  // ✅ Forgot password — sends reset OTP
+  forgotPassword: async (email) => {
+    const response = await fetch(`${API_BASE_URL}/api/customer/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => null)
+      throw new Error(data?.error || 'Request failed')
+    }
+    return response.json()
+  },
+
+  // ✅ Reset password — verify OTP + set new password
+  resetPassword: async (email, otp, newPassword) => {
+    const response = await fetch(`${API_BASE_URL}/api/customer/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, newPassword }),
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => null)
+      const err = new Error(data?.error || 'Password reset failed')
+      err.code = data?.code
+      throw err
+    }
+    return response.json()
+  },
+
+  // ✅ Change password (authenticated)
+  changePassword: async (currentPassword, newPassword) => {
+    const response = await fetch(`${API_BASE_URL}/api/customer/change-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => null)
+      throw new Error(data?.error || 'Failed to change password')
+    }
     return response.json()
   },
 }

@@ -233,6 +233,16 @@ export const CustomerAuthProvider = ({ children }) => {
     }
   }
 
+  // ✅ Change password (authenticated)
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      const res = await customerAuthAPI.changePassword(currentPassword, newPassword)
+      return { success: true, message: res.message }
+    } catch (err) {
+      return { success: false, message: err.message }
+    }
+  }
+
   const value = {
     customer,
     isLoggedIn: !!customer,
@@ -244,6 +254,7 @@ export const CustomerAuthProvider = ({ children }) => {
     logout,
     signup,
     update,
+    changePassword,
     fetchLocationDetails,
     updateProfileWithLocation,
     setLocationManually,

@@ -17,17 +17,15 @@ import OrderSummaryPage from './pages/OrderSummaryPage.jsx';
 import { ProtectedRoute } from './routes/ProtectedRoutes.jsx';
 import OffersPage from './pages/OffersPage.jsx';
 import BookingDetailPage from './pages/BookingDetailPage.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 
 function App() {
   return (
     <>
       <Router>
         <Routes>
-          <Route element={
-            <CinemaLayout />
-          }>
-
-            {/* <Route path="/" element={<HomePage />} /> */}
+          <Route element={<CinemaLayout />}>
+            {/* Public */}
             <Route path="/movies" element={<MoviesPage />} />
             <Route path="/movie/:movieId" element={<MovieInfoPage />} />
             <Route path="/movie/shows/:movieId" element={<MovieDetailsPage />} />
@@ -37,14 +35,13 @@ function App() {
             <Route path="/booking/failure" element={<BookingFailurePage />} />
             <Route path="/offers" element={<OffersPage />} />
             <Route path="/theatres" element={<TheatresPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            {/* Protected */}
             <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
             <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetailPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-
           </Route>
-
-          {/* Catch-all route - redirect to home */}
           <Route path="*" element={<Navigate to="/movies" replace />} />
         </Routes>
       </Router>

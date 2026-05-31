@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -18,24 +19,50 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { RxLockClosed } from "react-icons/rx";
 import { MdMailOutline } from "react-icons/md";
-import { FiUser, FiPhone, FiShield } from "react-icons/fi";
+import { FiUser, FiPhone, FiShield, FiEye, FiEyeOff } from "react-icons/fi";
 import { HiOutlineKey } from "react-icons/hi";
+import { ShieldAlert, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { customerAuthAPI } from '../services/api';
+import { PASSWORD_POLICY_CHECKS } from '../utils/passwordPolicy';
+
+/** Inline password-policy checklist — turns green as user types */
+function PasswordPolicyChecklist({ password }) {
+  if (!password) return null;
+  return (
+    <ul className="mt-2 space-y-1">
+      {PASSWORD_POLICY_CHECKS.map((check) => {
+        const passed = check.test(password);
+        return (
+          <li key={check.label} className={`flex items-center gap-1.5 text-xs ${passed ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+            <span>{passed ? '✓' : '○'}</span>
+            {check.label}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 export function LoginModal({ open, onOpenChange }) {
   const { login, signup } = useCustomerAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
+  const [lockedUntil, setLockedUntil] = useState(null);
+  const [lockHint, setLockHint] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpTimer, setOtpTimer] = useState(0);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Login state
   const [loginData, setLoginData] = useState({
@@ -65,6 +92,9 @@ export function LoginModal({ open, onOpenChange }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setErrorCode('');
+    setLockedUntil(null);
+    setLockHint('');
     setLoading(true);
 
     try {
@@ -75,48 +105,43 @@ export function LoginModal({ open, onOpenChange }) {
         onOpenChange(false);
         resetForms();
       } else {
-        // Handle different error scenarios based on message
+        const data = result.details || {};
+        const code = data?.code || '';
+        setErrorCode(code);
+
+        if (code === 'ACCOUNT_LOCKED') {
+          setLockedUntil(data.lockedUntil ? new Date(data.lockedUntil) : null);
+          setError(data.error || 'Account is temporarily locked.');
+          toast.error("Account locked");
+          return;
+        }
+
+        if (data?.hint) setLockHint(data.hint);
+
         const errorMessage = result.message || 'Login failed';
 
-        console.log("Login error message:", result); // Debug log
-
         if (errorMessage.includes('not verified') || errorMessage.includes('unverified')) {
-          // Account exists but not verified
-          setSignupData(prev => ({
-            ...prev,
-            email: loginData.email
-          }));
-
+          setSignupData(prev => ({ ...prev, email: loginData.email }));
           setActiveTab('signup');
-
           try {
-            await customerAuthAPI.sendOtp(loginData.email);
+            await customerAuthAPI.sendOtp(loginData.email, 'signup');
             setOtpSent(true);
             setOtpTimer(60);
             toast.info("Account not verified. OTP sent to your email!");
             setError('');
           } catch (otpErr) {
-            console.error('OTP send error:', otpErr);
             setError(otpErr.message || 'Failed to send OTP');
             toast.error("Failed to send OTP");
           }
-        } else if (errorMessage.includes('Invalid') || errorMessage.includes('credentials')) {
-          setError('Invalid email or password');
-          toast.error("Invalid credentials");
         } else if (errorMessage.includes('not found')) {
           setError('Account not found. Please sign up first.');
           toast.error("Account not found");
-        } else if (errorMessage.includes('too many') || errorMessage.includes('rate limit')) {
-          setError('Too many login attempts. Please try again later.');
-          toast.error("Too many attempts");
         } else {
           setError(errorMessage);
           toast.error("Login failed");
         }
       }
-    } catch (err) {
-      // Handle unexpected errors (network issues, etc.)
-      console.error('Login error:', err);
+    } catch {
       setError('Network error. Please try again.');
       toast.error("Connection failed");
     } finally {
@@ -124,28 +149,25 @@ export function LoginModal({ open, onOpenChange }) {
     }
   };
 
-  // Add this new function after handleLogin
   const handleSignup = async () => {
     setError('');
 
-    // Validate signup form first
     if (!signupData.name || !signupData.email || !signupData.phone) {
       setError('Please fill in all required fields');
       return false;
     }
-
     if (!signupData.email.includes('@')) {
       setError('Please enter a valid email');
       return false;
     }
-
     if (signupData.password !== signupData.confirmPassword) {
       setError('Passwords do not match');
       return false;
     }
-
-    if (signupData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Check all policy rules client-side for instant feedback
+    const allPassed = PASSWORD_POLICY_CHECKS.every(c => c.test(signupData.password));
+    if (!allPassed) {
+      setError('Please make sure your password meets all the requirements below.');
       return false;
     }
 
@@ -164,8 +186,7 @@ export function LoginModal({ open, onOpenChange }) {
         return false;
       }
 
-      handleSendOtp();
-
+      await handleSendOtp();
       return true;
     } catch (err) {
       setError(err.message || 'Signup failed');
@@ -176,18 +197,12 @@ export function LoginModal({ open, onOpenChange }) {
     }
   };
 
-  // Replace handleSendOtp with this
   const handleSendOtp = async () => {
-    // First signup the user
-    // const signupSuccess = await handleSignup();
-    // if (!signupSuccess) return;
-
-    // Then send OTP
     setLoading(true);
     try {
-      await customerAuthAPI.sendOtp(signupData.email);
+      await customerAuthAPI.sendOtp(signupData.email, 'signup');
       setOtpSent(true);
-      setOtpTimer(60); // 60 second cooldown
+      setOtpTimer(60);
       toast.success("OTP sent to your email!");
     } catch (err) {
       setError(err.message || 'Failed to send OTP');
@@ -197,7 +212,6 @@ export function LoginModal({ open, onOpenChange }) {
     }
   };
 
-  // Handle Verify OTP and Signup
   const handleVerifyAndSignup = async (e) => {
     e.preventDefault();
     setError('');
@@ -209,17 +223,7 @@ export function LoginModal({ open, onOpenChange }) {
 
     setLoading(true);
     try {
-      // First verify OTP
-      await customerAuthAPI.verifyOtp(signupData.email, signupData.otp);
-
-      // const response = await customerAuthAPI.signup({
-      //   name: signupData.name,
-      //   email: signupData.email,
-      //   phone: signupData.phone,
-      //   password: signupData.password
-      // });
-
-      // login(response.user);
+      await customerAuthAPI.verifyOtp(signupData.email, signupData.otp, 'signup');
       toast.success("Account created successfully!");
       onOpenChange(false);
       resetForms();
@@ -231,28 +235,26 @@ export function LoginModal({ open, onOpenChange }) {
     }
   };
 
-  // Reset forms
   const resetForms = () => {
     setLoginData({ email: '', password: '' });
-    setSignupData({
-      name: '',
-      email: '',
-      phone: '',
-      password: '',
-      confirmPassword: '',
-      otp: ''
-    });
+    setSignupData({ name: '', email: '', phone: '', password: '', confirmPassword: '', otp: '' });
     setOtpSent(false);
     setOtpTimer(0);
     setError('');
+    setErrorCode('');
+    setLockedUntil(null);
+    setLockHint('');
   };
 
-  // Handle modal close
-  const handleModalChange = (open) => {
-    if (!open) {
-      resetForms();
-    }
-    onOpenChange(open);
+  const handleModalChange = (isOpen) => {
+    if (!isOpen) resetForms();
+    onOpenChange(isOpen);
+  };
+
+  const handleForgotPassword = () => {
+    onOpenChange(false);
+    resetForms();
+    navigate('/forgot-password');
   };
 
   return (
@@ -272,17 +274,47 @@ export function LoginModal({ open, onOpenChange }) {
           </CardDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setError(''); setErrorCode(''); setLockedUntil(null); setLockHint(''); }} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mx-6 mb-4" style={{ width: 'calc(100% - 3rem)' }}>
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
 
-          {error && (
+          {/* Account locked banner */}
+          {errorCode === 'ACCOUNT_LOCKED' && (
+            <div className="px-6 mb-2">
+              <div className="rounded-xl border border-red-500/25 bg-red-500/8 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-red-400 font-semibold text-sm">
+                  <ShieldAlert className="h-4 w-4" />
+                  Account temporarily locked
+                </div>
+                {lockedUntil && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    Unlocks at {lockedUntil.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, {lockedUntil.toLocaleDateString()}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  To regain immediate access,{' '}
+                  <button onClick={handleForgotPassword} className="text-primary underline">reset your password</button>.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* General error */}
+          {error && errorCode !== 'ACCOUNT_LOCKED' && (
             <div className="px-6">
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
+            </div>
+          )}
+
+          {/* Remaining attempts hint */}
+          {lockHint && !error.includes('locked') && (
+            <div className="px-6 mb-2">
+              <p className="text-xs text-amber-500 text-center">{lockHint}</p>
             </div>
           )}
 
@@ -313,19 +345,27 @@ export function LoginModal({ open, onOpenChange }) {
                     <RxLockClosed className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                     <Input
                       id="login-password"
-                      type="password"
+                      type={showLoginPassword ? 'text' : 'password'}
                       placeholder="••••••••"
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                       required
                       disabled={loading}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(v => !v)}
+                      className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                      tabIndex={-1}
+                    >
+                      {showLoginPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
 
                 <div className="flex justify-end">
-                  <Button variant="link" className="px-0 text-sm text-primary">
+                  <Button type="button" variant="link" className="px-0 text-sm text-primary" onClick={handleForgotPassword}>
                     Forgot password?
                   </Button>
                 </div>
@@ -400,15 +440,24 @@ export function LoginModal({ open, onOpenChange }) {
                         <RxLockClosed className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
                           id="signup-password"
-                          type="password"
+                          type={showSignupPassword ? 'text' : 'password'}
                           placeholder="••••••••"
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           value={signupData.password}
                           onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                           required
                           disabled={loading}
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowSignupPassword(v => !v)}
+                          className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                          tabIndex={-1}
+                        >
+                          {showSignupPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
+                        </button>
                       </div>
+                      <PasswordPolicyChecklist password={signupData.password} />
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
@@ -417,15 +466,26 @@ export function LoginModal({ open, onOpenChange }) {
                         <HiOutlineKey className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
                           id="confirm-password"
-                          type="password"
+                          type={showConfirmPassword ? 'text' : 'password'}
                           placeholder="••••••••"
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           value={signupData.confirmPassword}
                           onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
                           required
                           disabled={loading}
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(v => !v)}
+                          className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                          tabIndex={-1}
+                        >
+                          {showConfirmPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
+                        </button>
                       </div>
+                      {signupData.confirmPassword && signupData.password !== signupData.confirmPassword && (
+                        <p className="text-xs text-destructive mt-1">Passwords do not match</p>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -457,7 +517,6 @@ export function LoginModal({ open, onOpenChange }) {
                             <InputOTPSlot index={1} />
                             <InputOTPSlot index={2} />
                           </InputOTPGroup>
-                          {/* <InputOTPSeparator /> */}
                           <InputOTPGroup>
                             <InputOTPSlot index={3} />
                             <InputOTPSlot index={4} />
