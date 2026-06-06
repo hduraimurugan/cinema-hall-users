@@ -236,3 +236,54 @@ html, body {
       var(--shadow-md);
   }
 }
+
+/* ==========================================
+   Global Button Hover Fixes (Premium Glow/Brightness)
+   ========================================== */
+
+/* General hover state transitions */
+button:hover:not(:disabled),
+[role="button"]:hover:not(:disabled),
+[data-slot="button"]:hover:not(:disabled),
+.btn:hover:not(:disabled) {
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Primary Button Hover: Force full opacity and brighten */
+button.bg-primary:hover:not(:disabled),
+[data-slot="button"].bg-primary:hover:not(:disabled),
+[role="button"].bg-primary:hover:not(:disabled) {
+  background-color: var(--primary) !important;
+  filter: brightness(1.12) contrast(1.02) !important;
+  opacity: 1 !important;
+}
+
+/* Destructive Button Hover: Force full opacity and brighten */
+button.bg-destructive:hover:not(:disabled),
+[data-slot="button"].bg-destructive:hover:not(:disabled),
+[role="button"].bg-destructive:hover:not(:disabled) {
+  background-color: var(--destructive) !important;
+  filter: brightness(1.12) contrast(1.02) !important;
+  opacity: 1 !important;
+}
+
+/* Secondary Button Hover: Force full opacity and brighten */
+button.bg-secondary:hover:not(:disabled),
+[data-slot="button"].bg-secondary:hover:not(:disabled),
+[role="button"].bg-secondary:hover:not(:disabled) {
+  background-color: var(--secondary) !important;
+  filter: brightness(1.12) contrast(1.02) !important;
+  opacity: 1 !important;
+}
+
+/* Outline and Ghost Buttons Hover: Sleek premium glassmorphism instead of muddy dark colors */
+button.border:hover:not(:disabled),
+[data-slot="button"].border:hover:not(:disabled),
+button[class*="hover:bg-accent"]:hover:not(:disabled),
+[data-slot="button"][class*="hover:bg-accent"]:hover:not(:disabled),
+button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):hover:not(:disabled),
+[data-slot="button"]:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
