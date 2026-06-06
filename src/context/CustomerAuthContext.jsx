@@ -243,6 +243,33 @@ export const CustomerAuthProvider = ({ children }) => {
     }
   }
 
+  // ✅ Google OAuth Login
+  const googleLogin = async (idToken) => {
+    try {
+      const res = await customerAuthAPI.googleLogin(idToken)
+      setCustomer(res.customer)
+
+      // Update profile with current location after successful login
+      if (district || state) {
+        await updateProfileWithLocation()
+      }
+
+      return { success: true, customer: res.customer }
+    } catch (err) {
+      return { success: false, message: err.message, details: err.response }
+    }
+  }
+
+  // ✅ Refresh customer data
+  const refreshCustomer = async () => {
+    try {
+      const res = await customerAuthAPI.getMe()
+      setCustomer(res.customer)
+    } catch {
+      // ignore
+    }
+  }
+
   const value = {
     customer,
     isLoggedIn: !!customer,
@@ -255,6 +282,8 @@ export const CustomerAuthProvider = ({ children }) => {
     signup,
     update,
     changePassword,
+    googleLogin,
+    refreshCustomer,
     fetchLocationDetails,
     updateProfileWithLocation,
     setLocationManually,

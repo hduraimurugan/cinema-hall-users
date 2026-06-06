@@ -158,6 +158,62 @@ export const customerAuthAPI = {
     }
     return response.json()
   },
+
+  // ✅ Google OAuth Login
+  googleLogin: async (idToken) => {
+    const response = await fetch(`${API_BASE_URL}/api/customer/google-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ idToken }),
+    })
+    const data = await response.json().catch(() => null)
+    if (!response.ok) {
+      const error = new Error(data?.error || "Google login failed")
+      error.response = data
+      throw error
+    }
+    return data
+  },
+
+  // ✅ Link OAuth provider
+  linkProvider: async (provider, { idToken } = {}) => {
+    const response = await fetch(`${API_BASE_URL}/api/customer/link-provider`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ provider, idToken }),
+    })
+    const data = await response.json().catch(() => null)
+    if (!response.ok) throw new Error(data?.error || "Failed to link provider")
+    return data
+  },
+
+  // ✅ Unlink OAuth provider
+  unlinkProvider: async (provider) => {
+    const response = await fetch(`${API_BASE_URL}/api/customer/unlink-provider`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ provider }),
+    })
+    const data = await response.json().catch(() => null)
+    if (!response.ok) throw new Error(data?.error || "Failed to unlink provider")
+    return data
+  },
+
+  // ✅ Set password (for OAuth-only accounts)
+  setPassword: async (newPassword) => {
+    const response = await fetch(`${API_BASE_URL}/api/customer/set-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ newPassword }),
+    })
+    const data = await response.json().catch(() => null)
+    if (!response.ok) throw new Error(data?.error || "Failed to set password")
+    return data
+  },
 }
 
 export const customerMoviesAPI = {
