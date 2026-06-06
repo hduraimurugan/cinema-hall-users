@@ -11,7 +11,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCustomerAuth } from "../context/CustomerAuthContext"
 import { useTheme } from "../context/ThemeContext"
 import { LoginModal } from "./LoginModal"
@@ -200,6 +200,7 @@ export function TopBar() {
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10 p-0 ml-0.5">
                                             <Avatar className="h-8 w-8 border-2 border-primary/30">
+                                                {customer?.avatar && <AvatarImage src={customer.avatar} alt={customer?.name} className="object-cover" />}
                                                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-bold">
                                                     {customer?.name?.charAt(0).toUpperCase() || "U"}
                                                 </AvatarFallback>
@@ -210,6 +211,7 @@ export function TopBar() {
                                         <DropdownMenuLabel className="font-normal py-3">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-9 w-9 border border-primary/20">
+                                                    {customer?.avatar && <AvatarImage src={customer.avatar} alt={customer?.name} className="object-cover" />}
                                                     <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-bold">
                                                         {customer?.name?.charAt(0).toUpperCase() || "U"}
                                                     </AvatarFallback>
