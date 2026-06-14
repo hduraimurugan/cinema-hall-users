@@ -674,7 +674,7 @@ const SeatSelectionPage = () => {
                             >
                                 <ZoomOut className="w-4 h-4" />
                             </button>
-                            <div className="text-center text-[9px] font-black text-muted-foreground select-none bg-zinc-100/50 dark:bg-zinc-850/50 py-0.5 rounded border border-zinc-200/30 dark:border-zinc-800/30">
+                            <div className="w-8 h-6 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md text-foreground/90 text-[8px] sm:text-[9px] font-black select-none">
                                 {Math.round(zoom * 100)}%
                             </div>
                         </div>
