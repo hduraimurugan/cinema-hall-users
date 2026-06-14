@@ -50,7 +50,8 @@ const HeroSlide = ({ movie, isActive }) => {
           }
           alt=""
           effect="blur"
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
+          wrapperClassName="w-full h-full block"
         />
         <div className="absolute inset-0 hero-gradient-t" />
         <div className="absolute inset-0 hero-gradient-r" />
