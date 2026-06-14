@@ -43,7 +43,7 @@ const AdBanner = () => {
     if (ads.length === 0) return null;
 
     return (
-        <section className="w-full py-1 px-1 md:px-6 lg:px-8">
+        <section className="w-full py-1">
             <div className="max-w-[1400px] mx-auto">
                 <Carousel
                     setApi={setEmblaApi}
@@ -74,6 +74,9 @@ const AdBanner = () => {
                                         alt={ad.title}
                                         className="w-full h-auto object-cover aspect-[3/1] sm:aspect-[3.5/1] md:aspect-[4.5/1] lg:aspect-[5/1]"
                                     />
+                                    <div className="absolute top-2 left-2 z-10 bg-rating/80 backdrop-blur-sm text-[10px] font-bold text-rating-foreground px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                                        AD
+                                    </div>
                                 </div>
                             </CarouselItem>
                         ))}

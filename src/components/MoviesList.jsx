@@ -1,14 +1,15 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { Star, ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { Star, ChevronLeft, ChevronRight, Ticket, Clock, Film } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { customerMoviesAPI } from '../services/api';
 import { Skeleton } from './ui/skeleton';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
+import { cn } from '@/lib/utils';
 
 const MovieCardSkeleton = () => (
   <div className="flex-shrink-0 w-full">
-    <Skeleton className="w-full aspect-[2/3] rounded-xl" />
+    <div className="w-full aspect-[2/3] rounded-2xl shimmer" />
     <div className="mt-3 px-1 space-y-2">
       <Skeleton className="h-4 w-3/4" />
       <Skeleton className="h-3 w-1/2" />
@@ -16,105 +17,153 @@ const MovieCardSkeleton = () => (
   </div>
 );
 
+const formatDuration = (mins) => {
+  if (!mins) return '';
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+};
+
 const MovieCard = ({ movie, showBookNow = true }) => {
   const navigate = useNavigate();
-  const [hovered, setHovered] = useState(false);
 
-  const genresText = Array.isArray(movie.genre) ? movie.genre.join(' / ') : movie.genre || '';
-  const languageText = Array.isArray(movie.language) ? movie.language.join(', ') : movie.language || '';
-  const genres = Array.isArray(movie.genre) ? movie.genre : movie.genre ? [movie.genre] : [];
+  const genres = useMemo(
+    () => (Array.isArray(movie.genre) ? movie.genre : movie.genre ? [movie.genre] : []),
+    [movie.genre]
+  );
+  const languageText = useMemo(
+    () => (Array.isArray(movie.language) ? movie.language.join(', ') : movie.language || ''),
+    [movie.language]
+  );
+
+  const handleClick = useCallback(() => {
+    navigate(`/movie/${movie.id}`);
+  }, [navigate, movie.id]);
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleClick();
+      }
+    },
+    [handleClick]
+  );
+
+  const handleBookNow = useCallback(
+    (e) => {
+      e.stopPropagation();
+      navigate(`/movie/shows/${movie.id}`);
+    },
+    [navigate, movie.id]
+  );
 
   return (
     <div
-      onClick={() => navigate(`/movie/${movie.id}`)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="group cursor-pointer flex-shrink-0 w-full"
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`${movie.title}${movie.rating ? `, rated ${movie.rating}` : ''}`}
+      className="group cursor-pointer flex-shrink-0 w-full focus-ring"
     >
-      <div className="relative overflow-hidden rounded-xl shadow-md">
+      <div className="relative overflow-hidden rounded-2xl shadow-md card-hover bg-card">
         {/* Poster */}
         <LazyLoadImage
           src={movie.poster_url || 'https://placehold.co/300x450/1a1a2e/FFFFFF?text=No+Poster'}
           alt={movie.title}
           effect="blur"
-          className="w-full h-auto aspect-[2/3] object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-auto aspect-[2/3] object-cover transition-transform duration-500 group-hover:scale-105"
           wrapperClassName="w-full block"
         />
 
+        {/* Subtle bottom gradient for text readability */}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+
         {/* Always-visible rating badge */}
         {movie.rating && (
-          <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm rounded-full px-2 py-0.5">
-            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+          <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-0.5 shadow-sm">
+            <Star className="w-3 h-3 fill-rating text-rating" />
             <span className="text-white text-xs font-bold">{movie.rating}</span>
           </div>
         )}
 
-        {/* Hover overlay */}
-        <div
-          className={`absolute inset-0 flex flex-col justify-end p-3 transition-all duration-300 ${
-            hovered ? 'opacity-100' : 'opacity-0'
-          }`}
-          style={{
-            background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.1) 100%)',
-          }}
-        >
-          {/* Genre tags */}
-          {genres.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {genres.slice(0, 2).map((g) => (
-                <span
-                  key={g}
-                  className="text-[10px] font-semibold uppercase tracking-wide bg-primary/80 text-white rounded-full px-2 py-0.5"
-                >
-                  {g}
-                </span>
-              ))}
-            </div>
-          )}
+        {/* Genre tags - bottom left, always visible */}
+        {genres.length > 0 && (
+          <div className="absolute bottom-2.5 left-2.5 flex flex-wrap gap-1 max-w-[70%]">
+            {genres.slice(0, 2).map((g) => (
+              <span
+                key={g}
+                className="text-[10px] font-semibold uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white/90 rounded-md px-1.5 py-0.5"
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
 
-          {/* Language */}
-          {languageText && (
-            <p className="text-white/70 text-[11px] mb-2">{languageText}</p>
-          )}
-
-          {/* Book Now button */}
-          {showBookNow && (
-            <div className="flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-white rounded-lg py-1.5 px-3 text-xs font-semibold transition-colors">
+        {/* Book Now overlay - appears on hover */}
+        {showBookNow && (
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20">
+            <button
+              onClick={handleBookNow}
+              className="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-2 px-4 text-xs font-bold shadow-lg shadow-primary/30 transition-all duration-200 scale-90 group-hover:scale-100"
+            >
               <Ticket className="w-3.5 h-3.5" />
               Book Now
-            </div>
-          )}
-        </div>
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Title below card */}
-      <div className="mt-2.5 px-0.5">
-        <h3 className="font-semibold text-sm md:text-base text-foreground line-clamp-1 leading-snug">
+      {/* Content below poster */}
+      <div className="mt-3 px-0.5">
+        <h3 className="font-semibold text-sm md:text-base text-foreground line-clamp-1 leading-snug group-hover:text-primary transition-colors duration-200">
           {movie.title}
         </h3>
-        {genresText && (
-          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{genresText}</p>
+        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+          {genres.length > 0 && (
+            <span className="line-clamp-1 max-w-[60%]">{genres.slice(0, 2).join(' / ')}</span>
+          )}
+          {formatDuration(movie.duration_mins) && (
+            <>
+              <span className="text-border" aria-hidden="true">|</span>
+              <span className="flex items-center gap-0.5 shrink-0">
+                <Clock className="w-3 h-3" />
+                {formatDuration(movie.duration_mins)}
+              </span>
+            </>
+          )}
+        </div>
+        {languageText && (
+          <p className="text-[11px] text-muted-foreground/70 mt-1 line-clamp-1">{languageText}</p>
         )}
       </div>
     </div>
   );
 };
 
-const SectionHeader = ({ title }) => (
+const SectionHeader = ({ title, onViewAll }) => (
   <div className="flex items-center justify-between mb-5">
     <div className="flex items-center gap-3">
-      <span className="w-1 h-6 rounded-full bg-primary block" />
-      <h2 className="text-lg md:text-xl font-bold text-foreground tracking-tight">{title}</h2>
+      <span className="w-1 h-7 rounded-full bg-primary block" aria-hidden="true" />
+      <h2 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{title}</h2>
     </div>
+    {onViewAll && (
+      <button
+        onClick={onViewAll}
+        className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+      >
+        View All
+      </button>
+    )}
   </div>
 );
 
 const MoviesList = ({
-  title = "Recommended Movies",
+  title = 'Recommended Movies',
   movies: customMovies,
   district,
   state,
-  filters = {}
+  filters = {},
 }) => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -126,19 +175,32 @@ const MoviesList = ({
 
   const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
 
-  const updateScrollButtons = () => {
+  const updateScrollButtons = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     setCanScrollLeft(el.scrollLeft > 8);
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
-  };
+  }, []);
 
-  const scroll = (dir) => {
+  const scroll = useCallback((dir) => {
     const el = scrollRef.current;
     if (!el) return;
     const amount = el.clientWidth * 0.75;
     el.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
-  };
+  }, []);
+
+  const handleScrollKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        scroll('left');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        scroll('right');
+      }
+    },
+    [scroll]
+  );
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -151,7 +213,7 @@ const MoviesList = ({
       el.removeEventListener('scroll', updateScrollButtons);
       ro.disconnect();
     };
-  }, [movies]);
+  }, [movies, updateScrollButtons]);
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -184,23 +246,21 @@ const MoviesList = ({
       }
     };
     fetchMovies();
-  }, [customMovies, district, state, filtersKey]);
+  }, [customMovies, district, state, filtersKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
-      <section className="w-full py-5 px-3 sm:px-6 lg:px-14">
-        <div className="max-w-[1400px] mx-auto">
-          <div className="flex items-center gap-3 mb-5">
-            <span className="w-1 h-6 rounded-full bg-primary/40 block" />
-            <Skeleton className="h-6 w-40" />
-          </div>
-          <div className="flex gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="w-[140px] sm:w-[160px] md:w-[185px] lg:w-[200px] flex-shrink-0">
-                <MovieCardSkeleton />
-              </div>
-            ))}
-          </div>
+      <section className="w-full">
+        <div className="flex items-center gap-3 mb-5">
+          <span className="w-1 h-7 rounded-full bg-primary/40 block" aria-hidden="true" />
+          <Skeleton className="h-6 w-40" />
+        </div>
+        <div className="flex gap-4 overflow-hidden">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px] flex-shrink-0">
+              <MovieCardSkeleton />
+            </div>
+          ))}
         </div>
       </section>
     );
@@ -208,12 +268,12 @@ const MoviesList = ({
 
   if (error) {
     return (
-      <section className="w-full py-5 px-3 sm:px-6 lg:px-14">
-        <div className="max-w-[1400px] mx-auto">
-          <SectionHeader title={title} />
-          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
-            <p className="text-destructive text-sm">{error}</p>
-          </div>
+      <section className="w-full">
+        <SectionHeader title={title} />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-12 text-center">
+          <Film className="w-10 h-10 text-destructive/40 mb-3" />
+          <p className="text-destructive text-sm font-medium">{error}</p>
+          <p className="text-muted-foreground text-xs mt-1">Could not load movies. Please try again.</p>
         </div>
       </section>
     );
@@ -221,63 +281,70 @@ const MoviesList = ({
 
   if (!movies || movies.length === 0) {
     return (
-      <section className="w-full py-5 px-3 sm:px-6 lg:px-14">
-        <div className="max-w-[1400px] mx-auto">
-          <SectionHeader title={title} />
-          <div className="bg-muted rounded-xl p-10 text-center">
-            <p className="text-muted-foreground text-sm">No movies available at the moment.</p>
-          </div>
+      <section className="w-full">
+        <SectionHeader title={title} />
+        <div className="flex flex-col items-center justify-center rounded-2xl bg-muted/50 p-12 text-center">
+          <Film className="w-10 h-10 text-muted-foreground/40 mb-3" />
+          <p className="text-foreground text-sm font-medium">No movies available</p>
+          <p className="text-muted-foreground text-xs mt-1">Check back later for new releases.</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="w-full py-5 px-3 sm:px-6 lg:px-14">
-      <div className="max-w-[1400px] mx-auto">
-        {/* Header with scroll arrows */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <span className="w-1 h-6 rounded-full bg-primary block" />
-            <h2 className="text-lg md:text-xl font-bold text-foreground tracking-tight">{title}</h2>
-          </div>
-
-          {/* Scroll arrows — desktop only */}
-          <div className="hidden sm:flex items-center gap-1.5">
-            <button
-              onClick={() => scroll('left')}
-              disabled={!canScrollLeft}
-              aria-label="Scroll left"
-              className="p-1.5 rounded-full border border-border bg-card text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => scroll('right')}
-              disabled={!canScrollRight}
-              aria-label="Scroll right"
-              className="p-1.5 rounded-full border border-border bg-card text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+    <section className="w-full">
+      {/* Header with scroll arrows */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <span className="w-1 h-7 rounded-full bg-primary block" aria-hidden="true" />
+          <h2 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{title}</h2>
+          <span className="hidden sm:inline text-xs text-muted-foreground font-medium">
+            {movies.length} {movies.length === 1 ? 'movie' : 'movies'}
+          </span>
         </div>
 
-        {/* Scrollable movie row */}
-        <div
-          ref={scrollRef}
-          className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto pb-3"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {movies.map((movie) => (
-            <div
-              key={movie.id}
-              className="w-[140px] sm:w-[160px] md:w-[185px] lg:w-[200px] flex-shrink-0"
-            >
-              <MovieCard movie={movie} showBookNow={showBookNow} />
-            </div>
-          ))}
+        {/* Scroll arrows - desktop only */}
+        <div className="hidden sm:flex items-center gap-1.5">
+          <button
+            onClick={() => scroll('left')}
+            disabled={!canScrollLeft}
+            aria-label="Scroll left"
+            className="p-2 rounded-full border border-border bg-card text-foreground hover:bg-muted hover:border-primary/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer shadow-sm"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => scroll('right')}
+            disabled={!canScrollRight}
+            aria-label="Scroll right"
+            className="p-2 rounded-full border border-border bg-card text-foreground hover:bg-muted hover:border-primary/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer shadow-sm"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
+      </div>
+
+      {/* Scrollable movie row */}
+      <div
+        ref={scrollRef}
+        role="region"
+        aria-label={`${title} movies`}
+        tabIndex={0}
+        onKeyDown={handleScrollKeyDown}
+        className={cn(
+          'flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto pb-3 scroll-snap-x',
+          'no-scrollbar'
+        )}
+      >
+        {movies.map((movie) => (
+          <div
+            key={movie.id}
+            className="w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px] flex-shrink-0 scroll-snap-start"
+          >
+            <MovieCard movie={movie} showBookNow={showBookNow} />
+          </div>
+        ))}
       </div>
     </section>
   );

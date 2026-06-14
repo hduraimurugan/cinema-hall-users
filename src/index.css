@@ -60,6 +60,8 @@ html, body {
   --color-info: var(--info);
   --color-offer: var(--offer);
   --color-warning: var(--warning);
+  --color-rating: var(--rating);
+  --color-rating-foreground: var(--rating-foreground);
 }
 
 :root {
@@ -105,6 +107,8 @@ html, body {
   --info: oklch(0.6 0.18 250);
   --offer: oklch(0.55 0.18 290);
   --warning: oklch(0.7 0.15 60);
+  --rating: oklch(0.78 0.18 75);       /* Golden star rating */
+  --rating-foreground: oklch(0.12 0.02 75);
 
   --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.1);
@@ -156,6 +160,8 @@ html, body {
   --info: oklch(0.68 0.16 250);
   --offer: oklch(0.65 0.16 290);
   --warning: oklch(0.75 0.14 60);
+  --rating: oklch(0.7 0.18 75);       /* Golden star rating (dimmed for dark) */
+  --rating-foreground: oklch(0.98 0.02 75);
 
   --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.4), 0 2px 4px -2px oklch(0 0 0 / 0.3);
@@ -289,6 +295,84 @@ html, body {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Cinema hero gradient overlays */
+  .hero-gradient-t {
+    background: linear-gradient(to top, var(--background) 0%, oklch(from var(--background) l c h / 0.6) 50%, oklch(from var(--background) l c h / 0.1) 100%);
+  }
+
+  .hero-gradient-r {
+    background: linear-gradient(to right, oklch(from var(--background) l c h / 0.85) 0%, oklch(from var(--background) l c h / 0.3) 50%, transparent 100%);
+  }
+
+  /* Card hover elevation */
+  .card-hover {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      oklch(from var(--muted) l c h / 0.5) 0%,
+      oklch(from var(--muted) l c h / 0.8) 50%,
+      oklch(from var(--muted) l c h / 0.5) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Pill tab active indicator */
+  .pill-active {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: 0 2px 8px oklch(from var(--primary) l c h / 0.3);
+  }
+
+  /* Premium shadow for feature cards */
+  .shadow-premium {
+    box-shadow:
+      0 4px 6px -1px oklch(0 0 0 / 0.08),
+      0 10px 15px -3px oklch(0 0 0 / 0.08),
+      0 0 0 1px oklch(0 0 0 / 0.02);
+  }
+
+  /* Keyboard focus ring */
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--radius);
+  }
+
+  /* Hero autoplay progress animation */
+  @keyframes hero-progress {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+
+  /* Featured badge glow */
+  .featured-glow {
+    box-shadow: 0 0 20px oklch(from var(--primary) l c h / 0.4);
+  }
+
+  /* Scroll snap container */
+  .scroll-snap-x {
+    scroll-snap-type: x mandatory;
+  }
+
+  .scroll-snap-start {
+    scroll-snap-align: start;
   }
 }
 
