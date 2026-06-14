@@ -22,18 +22,30 @@ export function CinemaLayout() {
       <TopNavbar />
 
       {/* Main Content */}
-      <main ref={mainRef} className="flex-1 overflow-y-auto min-h-0">
+      <main
+        ref={mainRef}
+        className="flex-1 overflow-y-auto min-h-0 scroll-smooth"
+        id="main-content"
+        role="main"
+        aria-label="Main content"
+      >
         <div className="min-h-full flex flex-col">
-          <div className="flex-1 mb-20">
-            <Outlet />
+          <div className="flex-1">
+            <div className="mx-auto max-w-7xl px-2 sm:px-4 lg:px-6">
+              <div key={pathname} className="page-enter">
+                <Outlet />
+              </div>
+            </div>
           </div>
 
           {/* Footer */}
-          <footer className="border-t border-border/60 bg-secondary/15 mt-auto">
-            <div className="flex h-16 items-center justify-center px-4">
-              <p className="text-sm text-muted-foreground">
-                © 2026 CinemaMax. All rights reserved.
-              </p>
+          <footer className="border-t border-border/40 bg-secondary/10">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="flex h-16 items-center justify-center">
+                <p className="text-sm text-muted-foreground">
+                  &copy; 2026 CinemaMax. All rights reserved.
+                </p>
+              </div>
             </div>
           </footer>
         </div>

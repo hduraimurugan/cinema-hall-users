@@ -60,12 +60,15 @@ export function TopBar() {
 
     return (
         <>
-            <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md shadow-sm transition-all duration-300">
-                <div className="mx-auto container flex h-14 sm:h-16 items-center px-3 sm:px-6 lg:px-8">
+            <header
+                className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 transition-all duration-300"
+                role="banner"
+            >
+                <div className="mx-auto flex h-14 sm:h-16 items-center px-3 sm:px-6 lg:px-8 max-w-7xl">
 
-                    {/* Mobile search overlay */}
+                    {/* Mobile search overlay — with animation */}
                     {mobileSearchOpen && (
-                        <div className="flex sm:hidden items-center gap-2 w-full">
+                        <div className="flex sm:hidden items-center gap-2 w-full animate-in slide-in-from-top-2 duration-200">
                             <form onSubmit={handleSearch} className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
                                 <Input
@@ -81,6 +84,7 @@ export function TopBar() {
                                 variant="ghost" size="icon"
                                 className="h-9 w-9 shrink-0 rounded-full"
                                 onClick={() => { setMobileSearchOpen(false); setSearchValue("") }}
+                                aria-label="Close search"
                             >
                                 <X className="h-5 w-5" />
                             </Button>
@@ -91,11 +95,11 @@ export function TopBar() {
                     <div className={`${mobileSearchOpen ? "hidden sm:flex" : "flex"} items-center justify-between flex-1 gap-2`}>
 
                         {/* Logo */}
-                        <Link to="/" className="flex items-center gap-2 shrink-0 group">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-primary/20 group-hover:scale-105 active:scale-95 transition-all">
+                        <Link to="/" className="flex items-center gap-2 shrink-0 group" aria-label="CinemaMax home">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-primary/20 group-hover:scale-105 active:scale-95 transition-all duration-200">
                                 <Film className="h-4 w-4" />
                             </div>
-                            <span className="hidden sm:block font-extrabold text-primary text-lg tracking-tight group-hover:scale-[1.02] active:scale-[0.98] transition-all">CineMax</span>
+                            <span className="hidden sm:block font-extrabold text-primary text-lg tracking-tight group-hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">CineMax</span>
                         </Link>
 
                         {/* Desktop search bar */}
@@ -107,8 +111,9 @@ export function TopBar() {
                             {/* Mobile: search icon */}
                             <Button
                                 variant="ghost" size="icon"
-                                className="sm:hidden h-9 w-9 rounded-full hover:bg-primary/10"
+                                className="sm:hidden h-9 w-9 rounded-full hover:bg-primary/10 transition-all duration-200"
                                 onClick={() => setMobileSearchOpen(true)}
+                                aria-label="Open search"
                             >
                                 <Search className="h-[18px] w-[18px]" />
                             </Button>
@@ -116,12 +121,13 @@ export function TopBar() {
                             {/* Mobile: location icon with dot if set */}
                             <Button
                                 variant="ghost" size="icon"
-                                className="sm:hidden h-9 w-9 rounded-full hover:bg-primary/10 relative"
+                                className="sm:hidden h-9 w-9 rounded-full hover:bg-primary/10 relative transition-all duration-200"
                                 onClick={() => setLocationOpen(true)}
+                                aria-label={district ? `Location: ${district}` : "Select location"}
                             >
                                 <MapPin className="h-[18px] w-[18px]" />
                                 {district && (
-                                    <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
+                                    <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
                                 )}
                             </Button>
 
@@ -130,19 +136,22 @@ export function TopBar() {
                                 variant="ghost" size="icon"
                                 onClick={toggleTheme}
                                 className="hidden sm:inline-flex h-9 w-9 rounded-full hover:bg-primary/10 transition-all duration-200"
+                                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                                title={theme === "dark" ? "Light mode" : "Dark mode"}
                             >
                                 {theme === "dark"
                                     ? <Sun className="h-[18px] w-[18px]" />
                                     : <Moon className="h-[18px] w-[18px]" />
                                 }
-                                <span className="sr-only">Toggle theme</span>
                             </Button>
 
                             {/* Desktop: location pill */}
                             <Button
                                 variant="ghost"
                                 onClick={() => setLocationOpen(true)}
-                                className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-full text-sm hover:bg-primary/10 border border-border/50 hover:border-primary/30 transition-all duration-200"
+                                className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-full text-sm hover:bg-primary/10 border border-border/40 hover:border-primary/30 transition-all duration-200"
+                                aria-label={district ? `Location: ${district}` : "Select location"}
+                                title={district ? `${district}${state ? ", " + state : ""}` : "Select location"}
                             >
                                 <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
                                 <span className="font-medium">{district || "Select city"}</span>
@@ -157,10 +166,11 @@ export function TopBar() {
                                     <Button
                                         variant="ghost" size="icon"
                                         className="relative h-9 w-9 rounded-full hover:bg-primary/10 transition-all duration-200"
+                                        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
                                     >
                                         <Bell className="h-[18px] w-[18px]" />
                                         {unreadCount > 0 && (
-                                            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                                            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none ring-2 ring-background">
                                                 {unreadCount}
                                             </span>
                                         )}
@@ -177,7 +187,7 @@ export function TopBar() {
                                     <div className="max-h-64 overflow-y-auto">
                                         {mockNotifications.map((n) => (
                                             <DropdownMenuItem key={n.id} className="flex items-start gap-3 p-3 cursor-pointer">
-                                                <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${n.unread ? "bg-primary" : "bg-transparent"}`} />
+                                                <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${n.unread ? "bg-primary" : "bg-transparent"}`} aria-hidden="true" />
                                                 <div className="flex-1 min-w-0">
                                                     <p className={`text-sm leading-snug ${n.unread ? "font-medium" : "text-muted-foreground"}`}>
                                                         {n.title}
@@ -198,7 +208,7 @@ export function TopBar() {
                             {customer ? (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10 p-0 ml-0.5">
+                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10 p-0 ml-0.5 transition-all duration-200" aria-label="User menu">
                                             <Avatar className="h-8 w-8 border-2 border-primary/30">
                                                 {customer?.avatar && <AvatarImage src={customer.avatar} alt={customer?.name} className="object-cover" />}
                                                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-bold">
@@ -262,7 +272,8 @@ export function TopBar() {
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="ghost" size="icon"
-                                        className="sm:hidden h-9 w-9 rounded-full hover:bg-primary/10 ml-0.5"
+                                        className="sm:hidden h-9 w-9 rounded-full hover:bg-primary/10 ml-0.5 transition-all duration-200"
+                                        aria-label="More options"
                                     >
                                         <Menu className="h-5 w-5" />
                                     </Button>
