@@ -17,7 +17,7 @@ export function TopNavbar() {
     const { customer } = useCustomerAuth()
 
     return (
-        <div className="border-b border-border/40 bg-background">
+        <div className="border-b border-border/60 bg-background transition-all duration-300">
             <div className="mx-auto container flex h-11 items-stretch justify-between px-3 sm:px-6 lg:px-8">
 
                 {/* Left nav */}

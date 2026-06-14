@@ -60,7 +60,7 @@ export function TopBar() {
 
     return (
         <>
-            <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 shadow-sm">
+            <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md shadow-sm transition-all duration-300">
                 <div className="mx-auto container flex h-14 sm:h-16 items-center px-3 sm:px-6 lg:px-8">
 
                     {/* Mobile search overlay */}
@@ -91,11 +91,11 @@ export function TopBar() {
                     <div className={`${mobileSearchOpen ? "hidden sm:flex" : "flex"} items-center justify-between flex-1 gap-2`}>
 
                         {/* Logo */}
-                        <Link to="/" className="flex items-center gap-2 shrink-0">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                        <Link to="/" className="flex items-center gap-2 shrink-0 group">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-primary/20 group-hover:scale-105 active:scale-95 transition-all">
                                 <Film className="h-4 w-4" />
                             </div>
-                            <span className="hidden sm:block font-bold text-primary text-lg tracking-tight">CineMax</span>
+                            <span className="hidden sm:block font-extrabold text-primary text-lg tracking-tight group-hover:scale-[1.02] active:scale-[0.98] transition-all">CineMax</span>
                         </Link>
 
                         {/* Desktop search bar */}

@@ -29,10 +29,10 @@ export function CinemaLayout() {
           </div>
 
           {/* Footer */}
-          <footer className="border-t bg-secondary/20 mt-auto">
+          <footer className="border-t border-border/60 bg-secondary/15 mt-auto">
             <div className="flex h-16 items-center justify-center px-4">
               <p className="text-sm text-muted-foreground">
-                © 2025 CinemaMax. All rights reserved.
+                © 2026 CinemaMax. All rights reserved.
               </p>
             </div>
           </footer>
