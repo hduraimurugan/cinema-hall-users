@@ -486,7 +486,7 @@ const SeatSelectionPage = () => {
                                                 <button
                                                     onClick={() => toggleSeat(seat)}
                                                     disabled={seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD'}
-                                                    className={`w-7 h-7 text-[10px] font-medium flex-shrink-0 ${getSeatClasses(seat)}`}
+                                                    className={`w-7 h-7 text-[10px] font-medium flex-shrink-0 custom-hover ${getSeatClasses(seat)}`}
                                                     title={`${seat.seat_label} - ₹${price}`}
                                                 >
                                                     {colLabel}
@@ -558,8 +558,8 @@ const SeatSelectionPage = () => {
                 <div className="container mx-auto px-3 sm:px-6 lg:px-14 py-2.5">
                     <div className="flex items-center gap-2 sm:gap-4">
                         <button
-                            onClick={() => navigate(-1)}
-                            className="p-2 bg-zinc-100/50 dark:bg-zinc-800/35 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/40 dark:border-zinc-700/20 rounded-xl transition flex-shrink-0 cursor-pointer"
+                                                            onClick={() => navigate(-1)}
+                                                            className="p-2 bg-zinc-100/50 dark:bg-zinc-800/35 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/40 dark:border-zinc-700/20 rounded-xl transition flex-shrink-0 cursor-pointer custom-hover"
                         >
                             <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -616,7 +616,7 @@ const SeatSelectionPage = () => {
                                 <button
                                     onClick={() => setShowSeatCountModal(true)}
                                     title="Click to change number of seats"
-                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#f84464]/10 border border-[#f84464]/20 text-[#f84464] text-[10px] font-bold uppercase tracking-wider hover:bg-[#f84464]/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#f84464]/10 border border-[#f84464]/20 text-[#f84464] text-[10px] font-bold uppercase tracking-wider hover:bg-[#f84464]/20 hover:scale-105 active:scale-95 transition-all cursor-pointer custom-hover"
                                 >
                                     <Users className="w-3.5 h-3.5" />
                                     <span>{seatCount} seat{seatCount > 1 ? 's' : ''}</span>
@@ -640,7 +640,7 @@ const SeatSelectionPage = () => {
                         <button
                             onClick={togglePanMode}
                             title={isPanMode ? 'Switch to Select mode' : 'Switch to Pan mode'}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all duration-200 flex-shrink-0 cursor-pointer ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all duration-200 flex-shrink-0 cursor-pointer custom-hover ${
                                 isPanMode
                                     ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 shadow-sm'
                                     : 'bg-zinc-100 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-800 text-muted-foreground hover:text-foreground hover:border-zinc-400 dark:hover:border-zinc-600'
@@ -662,7 +662,7 @@ const SeatSelectionPage = () => {
                                 onClick={() => setZoom(z => Math.min(MAX_ZOOM, parseFloat((z + ZOOM_STEP).toFixed(1))))}
                                 disabled={zoom >= MAX_ZOOM}
                                 title="Zoom in"
-                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 custom-hover"
                             >
                                 <ZoomIn className="w-4 h-4" />
                             </button>
@@ -670,7 +670,7 @@ const SeatSelectionPage = () => {
                                 onClick={() => setZoom(z => Math.max(MIN_ZOOM, parseFloat((z - ZOOM_STEP).toFixed(1))))}
                                 disabled={zoom <= MIN_ZOOM}
                                 title="Zoom out"
-                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 custom-hover"
                             >
                                 <ZoomOut className="w-4 h-4" />
                             </button>
@@ -716,7 +716,7 @@ const SeatSelectionPage = () => {
                         <button
                             onClick={handleProceed}
                             disabled={isProcessing}
-                            className="bg-[#f84464] hover:bg-[#e23655] active:bg-[#c92844] text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-[#f84464]/20 hover:shadow-[#f84464]/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:pointer-events-none"
+                            className="bg-[#f84464] hover:bg-[#e23655] active:bg-[#c92844] text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-[#f84464]/20 hover:shadow-[#f84464]/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:pointer-events-none custom-hover"
                         >
                             {isProcessing ? 'Processing...' : 'Proceed to Payment'}
                         </button>

@@ -277,12 +277,27 @@ button.bg-secondary:hover:not(:disabled),
 }
 
 /* Outline and Ghost Buttons Hover: Sleek premium glassmorphism instead of muddy dark colors */
-button.border:not(.bg-emerald-500):hover:not(:disabled),
-[data-slot="button"].border:not(.bg-emerald-500):hover:not(:disabled),
-button[class*="hover:bg-accent"]:not(.bg-emerald-500):hover:not(:disabled),
-[data-slot="button"][class*="hover:bg-accent"]:not(.bg-emerald-500):hover:not(:disabled),
-button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):not(.bg-emerald-500):hover:not(:disabled),
-[data-slot="button"]:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):not(.bg-emerald-500):hover:not(:disabled) {
+/* Outline and Ghost Buttons Hover: Sleek premium styles instead of muddy dark colors */
+
+/* Default / Light Mode: Subtle dark tint to avoid white-on-white text collision */
+button.border:not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+[data-slot="button"].border:not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+button[class*="hover:bg-accent"]:not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+[data-slot="button"][class*="hover:bg-accent"]:not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+[data-slot="button"]:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: var(--foreground) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Dark Mode: Sleek premium glassmorphic light highlights */
+.dark button.border:not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+.dark [data-slot="button"].border:not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+.dark button[class*="hover:bg-accent"]:not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+.dark [data-slot="button"][class*="hover:bg-accent"]:not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+.dark button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled),
+.dark [data-slot="button"]:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):not(.bg-emerald-500):not(.custom-hover):hover:not(:disabled) {
   background-color: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.25) !important;

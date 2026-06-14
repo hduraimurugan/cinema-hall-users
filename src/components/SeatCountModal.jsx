@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Flame, Check, AlertCircle, Sparkles } from 'lucide-react';
 
 function VehicleIllustration({ count }) {
@@ -568,7 +567,7 @@ export function SeatCountModal({ open, onConfirm, onClose, showData, getSeatPric
                 <button
                   key={num}
                   onClick={() => setCount(num)}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 cursor-pointer flex-shrink-0 ${
+                  className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 cursor-pointer flex-shrink-0 custom-hover ${
                     isActive
                       ? 'bg-[#f84464] text-white font-bold scale-110 shadow-lg shadow-[#f84464]/30 animate-pulse-subtle'
                       : 'text-foreground/70 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 hover:text-foreground hover:scale-105 active:scale-95'
@@ -601,13 +600,12 @@ export function SeatCountModal({ open, onConfirm, onClose, showData, getSeatPric
 
         {/* Action Button */}
         <div className="mt-4 pt-2">
-          <Button
+          <button
             onClick={() => onConfirm(count)}
-            size="lg"
-            className="w-full text-sm font-bold bg-[#f84464] hover:bg-[#e23655] active:bg-[#c92844] text-white rounded-xl shadow-lg shadow-[#f84464]/20 hover:shadow-[#f84464]/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer py-6"
+            className="w-full text-sm font-bold bg-[#f84464] hover:bg-[#e23655] active:bg-[#c92844] text-white rounded-xl shadow-lg shadow-[#f84464]/20 hover:shadow-[#f84464]/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer py-4 flex items-center justify-center custom-hover"
           >
             Select {count} Seat{count > 1 ? 's' : ''}
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>
