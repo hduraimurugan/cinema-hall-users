@@ -662,15 +662,12 @@ const SeatSelectionPage = () => {
                                     ({showData.show_details?.language_version || showData.movie?.language?.join(', ') || 'Tamil'})
                                 </span>
                             </h1>
-                            <p className="text-xs text-muted-foreground truncate font-medium">
-                                {showData.cinema_hall?.name || showData.screen?.name}
+                            <p className="text-[11px] sm:text-xs text-muted-foreground truncate font-medium">
+                                {showData.show_details?.show_date} • {showData.cinema_hall?.name || showData.screen?.name}
                             </p>
                             <div className="flex flex-wrap items-center gap-2 mt-1">
                                 <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm shadow-primary/20">
                                     {showData.show_details?.start_time ? formatTime(showData.show_details.start_time) : ''}
-                                </span>
-                                <span className="text-[10px] font-semibold text-muted-foreground hidden sm:inline-block">
-                                    {showData.show_details?.show_date}
                                 </span>
                                 <span className="text-[10px] font-bold border border-border rounded px-1.5 py-0.5 text-muted-foreground bg-secondary/20">
                                     {showData.screen?.screen_type || '2D'}
@@ -689,19 +686,35 @@ const SeatSelectionPage = () => {
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,oklch(from_var(--info)_l_c_h_/_0.04),transparent_70%)] pointer-events-none" />
 
                     {/* Legend + pan toggle */}
-                    <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-3 border-b border-border/40 relative z-10 select-none">
-                        <div className="flex items-center gap-3 sm:gap-6">
-                            {seatCount && (
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between px-4 sm:px-6 pt-4 pb-3.5 border-b border-border/40 relative z-10 select-none gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full md:w-auto gap-3">
+                            <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
+                                {seatCount && (
+                                    <button
+                                        onClick={() => setShowSeatCountModal(true)}
+                                        title="Click to change number of seats"
+                                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider hover:bg-primary/20 hover:scale-105 active:scale-95 transition-all cursor-pointer custom-hover"
+                                    >
+                                        <Users className="w-3.5 h-3.5" />
+                                        <span>{seatCount} seat{seatCount > 1 ? 's' : ''}</span>
+                                    </button>
+                                )}
+                                
                                 <button
-                                    onClick={() => setShowSeatCountModal(true)}
-                                    title="Click to change number of seats"
-                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider hover:bg-primary/20 hover:scale-105 active:scale-95 transition-all cursor-pointer custom-hover"
+                                    onClick={togglePanMode}
+                                    title={isPanMode ? 'Switch to Select mode' : 'Switch to Pan mode'}
+                                    className={`flex md:hidden items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all duration-200 cursor-pointer custom-hover ${
+                                        isPanMode
+                                            ? 'bg-info/10 border-info/30 text-info shadow-sm'
+                                            : 'bg-secondary/40 border border-border text-muted-foreground hover:text-foreground hover:border-border/60'
+                                    }`}
                                 >
-                                    <Users className="w-3.5 h-3.5" />
-                                    <span>{seatCount} seat{seatCount > 1 ? 's' : ''}</span>
+                                    {isPanMode ? <Hand className="w-3.5 h-3.5" /> : <MousePointer2 className="w-3.5 h-3.5" />}
+                                    <span>{isPanMode ? 'Pan' : 'Select'}</span>
                                 </button>
-                            )}
-                            <div className="flex gap-5 sm:gap-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 sm:gap-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-t border-border/10 pt-2 sm:pt-0 sm:border-0">
                                 <div className="flex items-center gap-2">
                                     <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] border border-muted-foreground/60 border-b-2 bg-secondary/25" />
                                     <span>Available</span>
@@ -716,18 +729,17 @@ const SeatSelectionPage = () => {
                                 </div>
                             </div>
                         </div>
+
                         <button
                             onClick={togglePanMode}
                             title={isPanMode ? 'Switch to Select mode' : 'Switch to Pan mode'}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all duration-200 flex-shrink-0 cursor-pointer custom-hover ${isPanMode
+                            className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all duration-200 flex-shrink-0 cursor-pointer custom-hover ${
+                                isPanMode
                                     ? 'bg-info/10 border-info/30 text-info shadow-sm'
                                     : 'bg-secondary/40 border border-border text-muted-foreground hover:text-foreground hover:border-border/60'
-                                }`}
+                            }`}
                         >
-                            {isPanMode
-                                ? <Hand className="w-3.5 h-3.5" />
-                                : <MousePointer2 className="w-3.5 h-3.5" />
-                            }
+                            {isPanMode ? <Hand className="w-3.5 h-3.5" /> : <MousePointer2 className="w-3.5 h-3.5" />}
                             <span>{isPanMode ? 'Pan' : 'Select'}</span>
                         </button>
                     </div>
@@ -778,25 +790,27 @@ const SeatSelectionPage = () => {
 
             {/* Floating Checkout Dock */}
             {selectedSeats.length > 0 && (
-                <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl bg-card/90 backdrop-blur-md border border-border/60 shadow-[0_12px_45px_rgba(0,0,0,0.15)] rounded-2xl z-30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
-                    <div className="px-5 py-4 flex items-center justify-between gap-3">
-                        <div>
-                            <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                                <span>{seatCount ? `${selectedSeats.length}/${seatCount} Selected` : `${selectedSeats.length} Selected`}</span>
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-4xl bg-card/90 backdrop-blur-md border border-border/60 shadow-[0_12px_45px_rgba(0,0,0,0.15)] rounded-2xl z-30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
+                    <div className="px-4 py-3 sm:px-5 sm:py-4 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <div className="flex items-center flex-wrap gap-1.5">
+                                <span className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                                    {seatCount ? `${selectedSeats.length}/${seatCount} Selected` : `${selectedSeats.length} Selected`}
+                                </span>
                                 {getSeatLabels().length > 0 && (
-                                    <span className="bg-secondary text-foreground px-1.5 py-0.5 rounded text-[9px] font-extrabold tracking-normal">
+                                    <span className="bg-secondary text-foreground px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-black tracking-tight max-w-[120px] sm:max-w-none truncate">
                                         {getSeatLabels().join(', ')}
                                     </span>
                                 )}
-                            </p>
-                            <p className="text-xl font-bold font-mono text-foreground mt-0.5">₹{calculateTotal()}</p>
+                            </div>
+                            <p className="text-lg sm:text-xl font-bold font-mono text-foreground mt-0.5">₹{calculateTotal()}</p>
                         </div>
                         <button
                             onClick={handleProceed}
                             disabled={isProcessing}
-                            className="bg-primary hover:bg-primary/95 text-primary-foreground px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:pointer-events-none custom-hover"
+                            className="bg-primary hover:bg-primary/95 text-primary-foreground px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:pointer-events-none custom-hover whitespace-nowrap flex-shrink-0"
                         >
-                            {isProcessing ? 'Processing...' : 'Proceed to Payment'}
+                            {isProcessing ? 'Processing...' : <>Proceed<span className="hidden sm:inline"> to Payment</span></>}
                         </button>
                     </div>
                 </div>

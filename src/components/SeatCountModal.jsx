@@ -522,7 +522,7 @@ export function SeatCountModal({ open, onConfirm, onClose, showData, getSeatPric
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-white/20 dark:border-zinc-800/40 shadow-2xl rounded-2xl p-6 transition-all duration-300">
+      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-white/20 dark:border-zinc-800/40 shadow-2xl rounded-2xl p-5 sm:p-6 transition-all duration-300">
         <style>{`
           [data-slot="dialog-content"] > button:last-child {
             display: ${onClose ? 'block' : 'none'} !important;
@@ -560,7 +560,7 @@ export function SeatCountModal({ open, onConfirm, onClose, showData, getSeatPric
 
         {/* Numbers Selector Grid */}
         <div className="flex flex-col items-center py-4">
-          <div className="w-full flex items-center justify-between overflow-x-auto scrollbar-none gap-1 py-1">
+          <div className="w-full grid grid-cols-5 gap-2 justify-items-center sm:flex sm:items-center sm:justify-between sm:gap-1 py-1 px-1">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
               const isActive = count === num;
               return (
@@ -569,7 +569,7 @@ export function SeatCountModal({ open, onConfirm, onClose, showData, getSeatPric
                   onClick={() => setCount(num)}
                   className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 cursor-pointer flex-shrink-0 custom-hover ${
                     isActive
-                      ? 'bg-[#f84464] text-white font-bold scale-110 shadow-lg shadow-[#f84464]/30 animate-pulse-subtle'
+                      ? 'bg-primary text-primary-foreground font-bold scale-110 shadow-lg shadow-primary/30 animate-pulse-subtle'
                       : 'text-foreground/70 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 hover:text-foreground hover:scale-105 active:scale-95'
                   }`}
                 >
@@ -583,14 +583,14 @@ export function SeatCountModal({ open, onConfirm, onClose, showData, getSeatPric
         {/* Dynamic Show Seating Category Stats */}
         {categoryStats.length > 0 && (
           <div className="border-t border-zinc-100 dark:border-zinc-800/60 my-2 pt-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full">
               {categoryStats.map((cat, idx) => (
-                <div key={idx} className="flex flex-col items-center text-center p-2 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/20 border border-zinc-100/50 dark:border-zinc-800/40">
-                  <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">{cat.name}</span>
-                  <span className="text-sm font-extrabold text-foreground mt-1">₹{cat.price}</span>
-                  <div className={`mt-2 flex items-center justify-center px-1.5 py-0.5 rounded border text-[9px] font-bold tracking-wide ${cat.statusColor}`}>
+                <div key={idx} className="flex flex-col items-center text-center p-1.5 sm:p-2.5 rounded-xl bg-zinc-50/50 dark:bg-zinc-800/20 border border-zinc-100/50 dark:border-zinc-800/40 w-full">
+                  <span className="text-[8px] sm:text-[10px] font-extrabold tracking-wider text-muted-foreground uppercase">{cat.name}</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-foreground mt-0.5 sm:mt-1">₹{cat.price}</span>
+                  <div className={`mt-1.5 sm:mt-2 flex items-center justify-center px-1 sm:px-1.5 py-0.5 rounded border text-[7.5px] sm:text-[9px] font-bold tracking-wide w-full ${cat.statusColor}`}>
                     {cat.statusIcon}
-                    <span>{cat.status}</span>
+                    <span className="truncate">{cat.status}</span>
                   </div>
                 </div>
               ))}
@@ -602,7 +602,7 @@ export function SeatCountModal({ open, onConfirm, onClose, showData, getSeatPric
         <div className="mt-4 pt-2">
           <button
             onClick={() => onConfirm(count)}
-            className="w-full text-sm font-bold bg-[#f84464] hover:bg-[#e23655] active:bg-[#c92844] text-white rounded-xl shadow-lg shadow-[#f84464]/20 hover:shadow-[#f84464]/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer py-4 flex items-center justify-center custom-hover"
+            className="w-full text-sm font-bold bg-primary hover:bg-primary/95 active:bg-primary/85 text-primary-foreground rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer py-4 flex items-center justify-center custom-hover"
           >
             Select {count} Seat{count > 1 ? 's' : ''}
           </button>
