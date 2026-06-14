@@ -81,15 +81,15 @@ const BookingSuccessPage = () => {
     const bookingId = booking.id?.substring(0, 8).toUpperCase();
 
     return (
-        <div className="min-h-screen bg-background py-10 px-4">
+        <div className="min-h-screen bg-background py-12 px-4 text-foreground">
             <div className="max-w-lg mx-auto">
 
                 {/* Success Header */}
                 <div className="text-center mb-8">
                     <div className="relative inline-flex items-center justify-center mb-5">
-                        <div className="absolute w-24 h-24 rounded-full bg-green-500/20 animate-ping" />
-                        <div className="relative w-20 h-20 rounded-full bg-green-500/15 flex items-center justify-center ring-4 ring-green-500/30">
-                            <CheckCircle className="w-11 h-11 text-green-500" strokeWidth={2} />
+                        <div className="absolute w-24 h-24 rounded-full bg-success/20 animate-ping" />
+                        <div className="relative w-20 h-20 rounded-full bg-success/15 flex items-center justify-center ring-4 ring-success/30">
+                            <CheckCircle className="w-11 h-11 text-success" strokeWidth={2} />
                         </div>
                     </div>
                     <h1 className="text-3xl font-extrabold tracking-tight mb-1">Booking Confirmed!</h1>
@@ -99,37 +99,37 @@ const BookingSuccessPage = () => {
                 {/* ── TICKET ── */}
                 <div
                     ref={ticketRef}
-                    className="bg-transparent dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border-0 border-border"
+                    className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-2xl"
                     style={{ fontFamily: 'system-ui, sans-serif' }}
                 >
-                    {/* Ticket Header — gradient banner */}
+                    {/* Ticket Header — dynamic gradient banner */}
                     <div
                         className="px-6 pt-6 pb-5"
                         style={{
-                            background: 'linear-gradient(135deg, #e11d48 0%, #be123c 60%, #9f1239 100%)',
+                            background: 'linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l - 0.08) c h) 100%)',
                         }}
                     >
-                        <div className="flex items-center gap-2 mb-3 opacity-80">
+                        <div className="flex items-center gap-2 mb-3 opacity-90">
                             <div
                                 className="w-6 h-6 rounded flex items-center justify-center"
-                                style={{ background: 'rgba(255,255,255,0.25)' }}
+                                style={{ background: 'rgba(255,255,255,0.2)' }}
                             >
-                                <span style={{ color: '#fff', fontSize: 13, fontWeight: 800 }}>C</span>
+                                <span className="text-white text-xs font-black">C</span>
                             </div>
-                            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em' }}>
+                            <span className="text-white/90 text-xs font-bold tracking-widest">
                                 CINEMAX
                             </span>
                         </div>
-                        <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 800, letterSpacing: '-0.01em', margin: 0, lineHeight: 1.2 }}>
+                        <h2 className="text-white text-2xl font-extrabold tracking-tight m-0 leading-tight">
                             {booking.movie_title}
                         </h2>
-                        <div className="flex items-center gap-3 mt-2">
-                            <span className="flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>
+                        <div className="flex items-center gap-3 mt-2 text-white/80 text-xs">
+                            <span className="flex items-center gap-1">
                                 <CalendarDays size={13} />
                                 {showDate}
                             </span>
                             {showTime && (
-                                <span className="flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>
+                                <span className="flex items-center gap-1">
                                     <Clock size={13} />
                                     {showTime}
                                 </span>
@@ -161,15 +161,15 @@ const BookingSuccessPage = () => {
                         {/* Booking ID + Status */}
                         <div className="grid grid-cols-2 gap-4 mb-5">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1 flex items-center gap-1">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
                                     <Hash size={11} /> Booking ID
                                 </p>
-                                <p className="font-mono font-bold text-lg tracking-wider">{bookingId}</p>
+                                <p className="font-mono font-bold text-lg tracking-wider text-foreground">{bookingId}</p>
                             </div>
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Status</p>
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-500/15 text-green-600 dark:text-green-400 ring-1 ring-green-500/30">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Status</p>
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success ring-1 ring-success/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
                                     {booking.booking_status?.charAt(0).toUpperCase() + booking.booking_status?.slice(1)}
                                 </span>
                             </div>
@@ -177,14 +177,14 @@ const BookingSuccessPage = () => {
 
                         {/* Seats */}
                         <div className="mb-5">
-                            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
                                 <Ticket size={11} /> Seats
                             </p>
                             <div className="flex flex-wrap gap-2">
                                 {(booking.seat_labels || []).map((seat, index) => (
                                     <span
                                         key={index}
-                                        className="px-3 py-1.5 rounded-lg text-sm font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 ring-1 ring-zinc-200 dark:ring-zinc-700"
+                                        className="px-3 py-1.5 rounded-lg text-sm font-bold bg-secondary text-foreground ring-1 ring-border"
                                     >
                                         {seat}
                                     </span>
@@ -195,23 +195,23 @@ const BookingSuccessPage = () => {
                         {/* Amount */}
                         <div className="flex items-end justify-between pb-4 border-b border-dashed border-border">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">Total Amount</p>
-                                <p className="text-xs text-muted-foreground/70">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">Total Amount</p>
+                                <p className="text-[10px] text-muted-foreground/75 font-mono">
                                     {booking.payment_id}
                                 </p>
                             </div>
-                            <p className="text-3xl font-extrabold tracking-tight">
+                            <p className="text-3xl font-extrabold font-mono tracking-tight text-foreground">
                                 ₹{Number(booking.total_amount).toFixed(2)}
                             </p>
                         </div>
 
                         {/* QR Stub */}
                         <div className="pt-4 flex items-center gap-5">
-                            <div className="bg-white p-2.5 rounded-xl shadow-sm ring-1 ring-zinc-200">
+                            <div className="bg-white p-2.5 rounded-xl shadow-sm ring-1 ring-border">
                                 <QRCodeSVG value={booking.id} size={90} level="M" />
                             </div>
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Scan to verify</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Scan to verify</p>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
                                     Present this QR code<br />at the cinema entrance.
                                 </p>
@@ -221,38 +221,38 @@ const BookingSuccessPage = () => {
                 </div>
 
                 {/* Email confirmation notice */}
-                <div className="mt-4 flex items-start gap-3 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3">
+                <div className="mt-5 flex items-start gap-3 bg-info/10 border border-info/20 rounded-xl px-4 py-3">
                     <span className="text-lg mt-0.5">📧</span>
-                    <p className="text-sm text-blue-600 dark:text-blue-400">
-                        <span className="font-semibold">Confirmation sent!</span>{' '}
+                    <p className="text-sm text-info">
+                        <span className="font-bold">Confirmation sent!</span>{' '}
                         A booking confirmation has been sent to your email.
                     </p>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <button
                         onClick={() => navigate('/bookings')}
-                        className="sm:col-span-1 bg-primary text-primary-foreground px-5 py-3 rounded-xl font-semibold text-sm hover:bg-primary/90 transition-colors"
+                        className="sm:col-span-1 bg-primary text-primary-foreground px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-primary/95 transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                     >
                         My Bookings
                     </button>
                     <button
                         onClick={handleDownload}
-                        className="sm:col-span-1 flex items-center justify-center gap-2 bg-zinc-800 dark:bg-zinc-700 text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
+                        className="sm:col-span-1 flex items-center justify-center gap-2 bg-secondary text-foreground px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-secondary/80 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                     >
                         <Download className="w-4 h-4" />
                         Download Ticket
                     </button>
                     <button
                         onClick={() => navigate('/movies')}
-                        className="sm:col-span-1 bg-secondary text-secondary-foreground px-5 py-3 rounded-xl font-semibold text-sm hover:bg-secondary/80 transition-colors"
+                        className="sm:col-span-1 bg-secondary text-foreground px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-secondary/80 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                     >
                         Book More
                     </button>
                 </div>
 
-                <p className="mt-6 text-center text-xs text-muted-foreground">
+                <p className="mt-8 text-center text-xs text-muted-foreground">
                     Need help? Contact us at{' '}
                     <a href="mailto:support@cinema.com" className="underline underline-offset-2 hover:text-foreground transition-colors">
                         support@cinema.com
