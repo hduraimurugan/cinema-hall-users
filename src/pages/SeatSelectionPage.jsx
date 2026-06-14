@@ -168,18 +168,18 @@ const SeatSelectionPage = () => {
         }
     };
 
-    // Theme-adaptive seat colors
+    // Theme-adaptive seat colors styled as physical 3D cinema chairs
     const getSeatClasses = (seat) => {
         if (seat.type === 'passage' || seat.isBlocked || seat.status === 'blocked') {
             return 'invisible pointer-events-none';
         }
         if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') {
-            return 'bg-gray-300 dark:bg-zinc-700 text-gray-400 dark:text-zinc-500 cursor-not-allowed border border-gray-300 dark:border-zinc-700';
+            return 'bg-zinc-200/50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 border border-zinc-300/40 dark:border-zinc-800/60 cursor-not-allowed rounded-t-md rounded-b-[3px] border-b-2 border-b-zinc-300/20 dark:border-b-zinc-800/20 opacity-35';
         }
         if (selectedSeats.includes(seat.id)) {
-            return 'bg-emerald-500 border border-emerald-500 text-white cursor-pointer shadow-sm';
+            return 'bg-emerald-500 border border-emerald-500 text-white font-bold cursor-pointer shadow-lg shadow-emerald-500/25 scale-105 rounded-t-md rounded-b-[3px] border-b-2 border-b-emerald-600 transition-all duration-200';
         }
-        return 'bg-transparent border border-gray-400 dark:border-zinc-500 text-gray-600 dark:text-zinc-300 hover:border-gray-700 dark:hover:border-zinc-300 cursor-pointer';
+        return 'bg-zinc-50/5 dark:bg-zinc-900/10 border border-zinc-400/80 dark:border-zinc-700/80 text-zinc-600 dark:text-zinc-400 hover:border-[#f84464] hover:text-[#f84464] hover:bg-[#f84464]/5 hover:scale-110 shadow-sm cursor-pointer rounded-t-md rounded-b-[3px] border-b-2 border-b-zinc-400/40 dark:border-b-zinc-700/30 transition-all duration-150';
     };
 
     const generateSeatsByCategory = () => {
@@ -454,17 +454,21 @@ const SeatSelectionPage = () => {
 
         return (
             <div className="mb-10">
-                <div className="text-center mb-4">
-                    <span className="text-[11px] font-semibold text-gray-500 dark:text-zinc-400 tracking-widest uppercase">
-                        ₹{price} {sectionTitle}
+                {/* Visual Category pricing pill anchored by fine divider lines */}
+                <div className="flex items-center justify-center gap-4 mb-6 select-none px-4">
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-zinc-200 dark:to-zinc-800/60" />
+                    <span className="text-[10px] font-bold tracking-[0.2em] text-zinc-500 dark:text-zinc-400 uppercase bg-zinc-100/80 dark:bg-zinc-900/60 backdrop-blur-sm px-3.5 py-1 rounded-full border border-zinc-200/50 dark:border-zinc-800/40">
+                        {sectionTitle} • ₹{price}
                     </span>
+                    <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-zinc-200 dark:to-zinc-800/60" />
                 </div>
+                
                 <div className="space-y-1.5">
                     {sortedRows.map((row) => (
                         <React.Fragment key={row}>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5 justify-center">
                                 {/* Left row label */}
-                                <div className="w-5 text-center text-[10px] text-gray-400 dark:text-zinc-500 flex-shrink-0 select-none">
+                                <div className="w-5 text-center text-[10px] font-bold text-zinc-400 dark:text-zinc-600 flex-shrink-0 select-none">
                                     {row}
                                 </div>
                                 {seatsByRow[row]
@@ -482,21 +486,21 @@ const SeatSelectionPage = () => {
                                                 <button
                                                     onClick={() => toggleSeat(seat)}
                                                     disabled={seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD'}
-                                                    className={`w-7 h-7 text-[10px] font-medium rounded-sm transition-colors duration-150 flex-shrink-0 ${getSeatClasses(seat)}`}
+                                                    className={`w-7 h-7 text-[10px] font-medium flex-shrink-0 ${getSeatClasses(seat)}`}
                                                     title={`${seat.seat_label} - ₹${price}`}
                                                 >
                                                     {colLabel}
                                                 </button>
-                                                {hasAisleAfter && <div className="w-3 sm:w-4 flex-shrink-0" aria-hidden="true" />}
+                                                {hasAisleAfter && <div className="w-3.5 sm:w-4 flex-shrink-0" aria-hidden="true" />}
                                             </React.Fragment>
                                         );
                                     })}
                                 {/* Right row label */}
-                                <div className="w-5 text-center text-[10px] text-gray-400 dark:text-zinc-500 flex-shrink-0 select-none">
+                                <div className="w-5 text-center text-[10px] font-bold text-zinc-400 dark:text-zinc-600 flex-shrink-0 select-none">
                                     {row}
                                 </div>
                             </div>
-                            {aisleAfterRows.includes(row) && <div className="h-3" aria-hidden="true" />}
+                            {aisleAfterRows.includes(row) && <div className="h-3.5" aria-hidden="true" />}
                         </React.Fragment>
                     ))}
                 </div>
@@ -527,9 +531,13 @@ const SeatSelectionPage = () => {
     const screenPosition = showData?.screen?.layout?.screenPosition || 'bottom';
 
     const screenIndicator = (
-        <div className="my-8 px-4">
-            <div className="h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full" />
-            <p className="text-center text-[10px] font-semibold tracking-[0.3em] text-blue-500 dark:text-blue-400 uppercase mt-2">
+        <div className="my-10 px-4 relative flex flex-col items-center select-none">
+            {/* Curved cinema screen reflecting projector light */}
+            <div className="w-72 sm:w-96 h-4 border-t-2 border-blue-400/50 dark:border-blue-400/80 rounded-[50%/10px_10px_0_0] relative shadow-[0_-8px_24px_-4px_rgba(96,165,250,0.25)]">
+                {/* Projector cone light beam fading down */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-28 bg-gradient-to-b from-blue-400/12 via-blue-400/3 to-transparent blur-md pointer-events-none rounded-[50%/0_0_20px_20px]" />
+            </div>
+            <p className="text-center text-[9px] font-bold tracking-[0.4em] text-blue-400 dark:text-blue-400/90 uppercase mt-3">
                 All Eyes This Way
             </p>
         </div>
@@ -544,22 +552,22 @@ const SeatSelectionPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-background pb-24">
-            {/* Sticky Header */}
-            <div className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
+        <div className="min-h-screen bg-background pb-28">
+            {/* Sticky Header - Glassmorphic Frosted Bar */}
+            <div className="sticky top-0 z-35 backdrop-blur-md bg-background/80 border-b border-zinc-200/30 dark:border-zinc-800/40 shadow-sm transition-all duration-300">
                 <div className="container mx-auto px-3 sm:px-6 lg:px-14 py-2.5">
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <button
                             onClick={() => navigate(-1)}
-                            className="p-1.5 sm:p-2 hover:bg-secondary rounded-md transition flex-shrink-0"
+                            className="p-2 bg-zinc-100/50 dark:bg-zinc-800/35 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/40 dark:border-zinc-700/20 rounded-xl transition flex-shrink-0 cursor-pointer"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
 
                         {showData.movie?.poster_url && (
-                            <div className="h-14 w-10 sm:h-16 sm:w-11 rounded overflow-hidden flex-shrink-0 bg-muted border border-border">
+                            <div className="h-14 w-10 sm:h-16 sm:w-11 rounded-lg overflow-hidden flex-shrink-0 bg-muted border border-zinc-200/50 dark:border-zinc-800/40 shadow-sm">
                                 <img
                                     src={showData.movie.poster_url}
                                     alt={showData.movie.title}
@@ -569,23 +577,23 @@ const SeatSelectionPage = () => {
                         )}
 
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-sm sm:text-base font-semibold leading-tight truncate">
+                            <h1 className="text-sm sm:text-base font-bold leading-tight truncate text-foreground">
                                 {showData.movie?.title}
-                                <span className="text-xs font-normal text-muted-foreground ml-1.5 hidden sm:inline">
+                                <span className="text-xs font-medium text-muted-foreground ml-2 hidden sm:inline-block">
                                     ({showData.show_details?.language_version || showData.movie?.language?.join(', ') || 'Tamil'})
                                 </span>
                             </h1>
-                            <p className="text-xs text-muted-foreground truncate">
+                            <p className="text-xs text-muted-foreground truncate font-medium">
                                 {showData.cinema_hall?.name || showData.screen?.name}
                             </p>
-                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                <span className="bg-blue-600 text-white text-[11px] px-2 py-0.5 rounded font-medium">
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                                <span className="bg-[#f84464] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm shadow-[#f84464]/20">
                                     {showData.show_details?.start_time ? formatTime(showData.show_details.start_time) : ''}
                                 </span>
-                                <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                                <span className="text-[10px] font-semibold text-muted-foreground hidden sm:inline-block">
                                     {showData.show_details?.show_date}
                                 </span>
-                                <span className="text-[11px] border border-border rounded px-1.5 py-0.5">
+                                <span className="text-[10px] font-bold border border-zinc-200 dark:border-zinc-800 rounded px-1.5 py-0.5 text-muted-foreground bg-zinc-50/5 dark:bg-zinc-800/10">
                                     {showData.screen?.screen_type || '2D'}
                                 </span>
                             </div>
@@ -596,58 +604,61 @@ const SeatSelectionPage = () => {
 
             {/* Seat Layout Area */}
             <div className="py-4 sm:py-6 px-2 sm:px-4 lg:px-14">
-                <div className="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl sm:rounded-2xl overflow-hidden">
+                <div className="bg-gradient-to-b from-zinc-50/50 to-zinc-100/50 dark:from-zinc-950/40 dark:to-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-inner relative">
+                    
+                    {/* Thematic Ambient glow behind seating container */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.03),transparent_70%)] pointer-events-none" />
 
                     {/* Legend + pan toggle */}
-                    <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-2">
+                    <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-3 border-b border-zinc-200/20 dark:border-zinc-800/20 relative z-10 select-none">
                         <div className="flex items-center gap-3 sm:gap-6">
                             {seatCount && (
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 text-primary text-[11px] sm:text-xs font-medium">
-                                    <Users className="w-3 h-3" />
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#f84464]/10 border border-[#f84464]/20 text-[#f84464] text-[10px] font-bold uppercase tracking-wider">
+                                    <Users className="w-3.5 h-3.5" />
                                     <span>{seatCount} seat{seatCount > 1 ? 's' : ''}</span>
                                 </div>
                             )}
-                            <div className="flex gap-5 sm:gap-8 text-[11px] sm:text-xs text-gray-500 dark:text-zinc-400">
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm border border-gray-400 dark:border-zinc-500" />
-                                <span>Available</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm bg-gray-300 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-700" />
-                                <span>Sold</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm bg-emerald-500" />
-                                <span>Selected</span>
-                            </div>
+                            <div className="flex gap-5 sm:gap-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] border border-zinc-400 dark:border-zinc-600 border-b-2 bg-zinc-100/5" />
+                                    <span>Available</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] bg-zinc-200/50 dark:bg-zinc-800/40 border border-zinc-300 dark:border-zinc-800/60 border-b-2 opacity-35" />
+                                    <span>Sold</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] bg-emerald-500 border border-emerald-500 border-b-2 border-b-emerald-600 shadow-sm" />
+                                    <span>Selected</span>
+                                </div>
                             </div>
                         </div>
                         <button
                             onClick={togglePanMode}
                             title={isPanMode ? 'Switch to Select mode' : 'Switch to Pan mode'}
-                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors duration-150 flex-shrink-0 ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all duration-200 flex-shrink-0 cursor-pointer ${
                                 isPanMode
-                                    ? 'bg-blue-500/15 border-blue-500/50 text-blue-400'
-                                    : 'bg-transparent border-gray-300 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 hover:border-gray-500 dark:hover:border-zinc-500'
+                                    ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 shadow-sm'
+                                    : 'bg-zinc-100 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-800 text-muted-foreground hover:text-foreground hover:border-zinc-400 dark:hover:border-zinc-600'
                             }`}
                         >
                             {isPanMode
                                 ? <Hand className="w-3.5 h-3.5" />
                                 : <MousePointer2 className="w-3.5 h-3.5" />
                             }
-                            <span className="hidden sm:inline">{isPanMode ? 'Pan' : 'Select'}</span>
+                            <span>{isPanMode ? 'Pan' : 'Select'}</span>
                         </button>
                     </div>
 
                     {/* Scrollable seat grid + floating zoom buttons */}
-                    <div className="relative">
-                        {/* Zoom controls — floating on the right edge */}
-                        <div className="absolute right-3 bottom-8 z-10 hidden sm:flex flex-col gap-1.5">
+                    <div className="relative z-10">
+                        {/* Zoom controls */}
+                        <div className="absolute right-4 bottom-8 z-10 hidden sm:flex flex-col gap-2">
                             <button
                                 onClick={() => setZoom(z => Math.min(MAX_ZOOM, parseFloat((z + ZOOM_STEP).toFixed(1))))}
                                 disabled={zoom >= MAX_ZOOM}
                                 title="Zoom in"
-                                className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
                             >
                                 <ZoomIn className="w-4 h-4" />
                             </button>
@@ -655,18 +666,18 @@ const SeatSelectionPage = () => {
                                 onClick={() => setZoom(z => Math.max(MIN_ZOOM, parseFloat((z - ZOOM_STEP).toFixed(1))))}
                                 disabled={zoom <= MIN_ZOOM}
                                 title="Zoom out"
-                                className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
                             >
                                 <ZoomOut className="w-4 h-4" />
                             </button>
-                            <div className="text-center text-[10px] text-gray-400 dark:text-zinc-500 select-none">
+                            <div className="text-center text-[9px] font-black text-muted-foreground select-none bg-zinc-100/50 dark:bg-zinc-850/50 py-0.5 rounded border border-zinc-200/30 dark:border-zinc-800/30">
                                 {Math.round(zoom * 100)}%
                             </div>
                         </div>
 
                         <div
                             ref={scrollContainerRef}
-                            className="overflow-x-auto overflow-y-visible pb-6 pt-2"
+                            className="overflow-x-auto overflow-y-visible pb-8 pt-4"
                             style={{ cursor: isPanMode ? (isDraggingActive ? 'grabbing' : 'grab') : 'default' }}
                             onMouseDown={handlePanMouseDown}
                         >
@@ -683,26 +694,25 @@ const SeatSelectionPage = () => {
                 </div>
             </div>
 
-            {/* Bottom payment bar */}
+            {/* Floating Checkout Dock */}
             {selectedSeats.length > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-2xl z-20">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-3 flex items-center justify-between gap-3">
+                <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl bg-white/90 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200/40 dark:border-zinc-800/60 shadow-[0_12px_45px_rgba(0,0,0,0.22)] rounded-2xl z-30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
+                    <div className="px-5 py-4 flex items-center justify-between gap-3">
                         <div>
-                            <p className="text-xs text-muted-foreground">
-                                {seatCount ? `${selectedSeats.length}/${seatCount} selected` : `${selectedSeats.length} selected`}
-                                {selectedSeats.length > 1 ? '  •  ' : ''}
+                            <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                <span>{seatCount ? `${selectedSeats.length}/${seatCount} Selected` : `${selectedSeats.length} Selected`}</span>
                                 {getSeatLabels().length > 0 && (
-                                    <span className="hidden sm:inline ml-1">
+                                    <span className="bg-zinc-100 dark:bg-zinc-800 text-foreground px-1.5 py-0.5 rounded text-[9px] font-extrabold tracking-normal">
                                         {getSeatLabels().join(', ')}
                                     </span>
                                 )}
                             </p>
-                            <p className="text-lg font-bold leading-tight">₹{calculateTotal()}</p>
+                            <p className="text-xl font-black text-foreground mt-0.5">₹{calculateTotal()}</p>
                         </div>
                         <button
                             onClick={handleProceed}
                             disabled={isProcessing}
-                            className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-semibold text-sm transition cursor-pointer disabled:pointer-events-none"
+                            className="bg-[#f84464] hover:bg-[#e23655] active:bg-[#c92844] text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-[#f84464]/20 hover:shadow-[#f84464]/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:pointer-events-none"
                         >
                             {isProcessing ? 'Processing...' : 'Proceed to Payment'}
                         </button>
