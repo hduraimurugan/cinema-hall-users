@@ -174,12 +174,12 @@ const SeatSelectionPage = () => {
             return 'invisible pointer-events-none';
         }
         if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') {
-            return 'bg-zinc-200/50 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 border border-zinc-300/40 dark:border-zinc-800/60 cursor-not-allowed rounded-t-md rounded-b-[3px] border-b-2 border-b-zinc-300/20 dark:border-b-zinc-800/20 opacity-35';
+            return 'bg-secondary/40 text-muted-foreground/30 border border-border/40 cursor-not-allowed rounded-t-md rounded-b-[3px] border-b-2 border-b-border/10 opacity-30';
         }
         if (selectedSeats.includes(seat.id)) {
-            return 'bg-emerald-500 border border-emerald-500 text-white font-bold cursor-pointer shadow-lg shadow-emerald-500/25 scale-105 rounded-t-md rounded-b-[3px] border-b-2 border-b-emerald-600 transition-all duration-200';
+            return 'bg-success border border-success text-success-foreground font-bold cursor-pointer shadow-lg shadow-success/20 scale-105 rounded-t-md rounded-b-[3px] border-b-2 border-b-success/80 transition-all duration-200';
         }
-        return 'bg-zinc-50/5 dark:bg-zinc-900/10 border border-zinc-400/80 dark:border-zinc-700/80 text-zinc-600 dark:text-zinc-400 hover:border-[#f84464] hover:text-[#f84464] hover:bg-[#f84464]/5 hover:scale-110 shadow-sm cursor-pointer rounded-t-md rounded-b-[3px] border-b-2 border-b-zinc-400/40 dark:border-b-zinc-700/30 transition-all duration-150';
+        return 'bg-secondary/20 border border-border/80 text-foreground hover:border-primary hover:text-primary hover:bg-primary/5 hover:scale-110 shadow-sm cursor-pointer rounded-t-md rounded-b-[3px] border-b-2 border-b-border/40 transition-all duration-150';
     };
 
     const generateSeatsByCategory = () => {
@@ -266,9 +266,21 @@ const SeatSelectionPage = () => {
         ctx.save();
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // Background
+        // Theme variables from current stylesheet
         const isDark = document.documentElement.classList.contains('dark');
-        ctx.fillStyle = isDark ? '#18181b' : '#f4f4f5';
+        const style = window.getComputedStyle(document.documentElement);
+        const getVal = (name, fallback) => style.getPropertyValue(name).trim() || fallback;
+
+        const cardVal = getVal('--card', isDark ? '#18181b' : '#fafafa');
+        const borderVal = getVal('--border', isDark ? '#27272a' : '#e4e4e7');
+        const mutedForegroundVal = getVal('--muted-foreground', isDark ? '#71717a' : '#a1a1aa');
+        const primaryVal = getVal('--primary', '#f84464');
+        const successVal = getVal('--success', '#10b981');
+        const infoVal = getVal('--info', '#3b82f6');
+        const warningVal = getVal('--warning', '#eab308');
+
+        // Background
+        ctx.fillStyle = cardVal;
         ctx.fillRect(0, 0, logicalW, logicalH);
 
         // Seats
@@ -284,28 +296,28 @@ const SeatSelectionPage = () => {
             const mh = Math.max(SEAT_H_PX * scaleY, 1.5);
 
             if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') {
-                ctx.fillStyle = '#52525b';
+                ctx.fillStyle = isDark ? '#27272a' : '#e4e4e7';
             } else if (selectedSeats.includes(seat.id)) {
-                ctx.fillStyle = '#10b981';
+                ctx.fillStyle = successVal;
             } else if (seat.type === 'premium') {
-                ctx.fillStyle = '#f59e0b';
+                ctx.fillStyle = primaryVal;
             } else if (seat.type === 'gold') {
-                ctx.fillStyle = '#facc15';
+                ctx.fillStyle = warningVal;
             } else {
-                ctx.fillStyle = '#9ca3af';
+                ctx.fillStyle = mutedForegroundVal;
             }
             ctx.fillRect(mx, my, mw, mh);
         });
 
-        // Viewport rectangle
+        // Viewport rectangle overlay
         const vpLeft = scrollEl.scrollLeft * scaleX;
         const vpTop = scrollEl.scrollTop * scaleY;
         const vpW = scrollEl.clientWidth * scaleX;
         const vpH = scrollEl.clientHeight * scaleY;
 
-        ctx.fillStyle = 'rgba(147, 197, 253, 0.15)';
+        ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.04)';
         ctx.fillRect(vpLeft, vpTop, vpW, vpH);
-        ctx.strokeStyle = 'rgba(147, 197, 253, 0.85)';
+        ctx.strokeStyle = infoVal;
         ctx.lineWidth = 1.5;
         ctx.strokeRect(vpLeft, vpTop, vpW, vpH);
 
@@ -456,11 +468,11 @@ const SeatSelectionPage = () => {
             <div className="mb-10">
                 {/* Visual Category pricing pill anchored by fine divider lines */}
                 <div className="flex items-center justify-center gap-4 mb-6 select-none px-4">
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-zinc-200 dark:to-zinc-800/60" />
-                    <span className="text-[10px] font-bold tracking-[0.2em] text-zinc-500 dark:text-zinc-400 uppercase bg-zinc-100/80 dark:bg-zinc-900/60 backdrop-blur-sm px-3.5 py-1 rounded-full border border-zinc-200/50 dark:border-zinc-800/40">
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-border/60" />
+                    <span className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase bg-secondary/40 backdrop-blur-sm px-3.5 py-1 rounded-full border border-border/40">
                         {sectionTitle} • ₹{price}
                     </span>
-                    <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-zinc-200 dark:to-zinc-800/60" />
+                    <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-border/60" />
                 </div>
                 
                 <div className="space-y-1.5">
@@ -468,7 +480,7 @@ const SeatSelectionPage = () => {
                         <React.Fragment key={row}>
                             <div className="flex items-center gap-1.5 justify-center">
                                 {/* Left row label */}
-                                <div className="w-5 text-center text-[10px] font-bold text-zinc-400 dark:text-zinc-600 flex-shrink-0 select-none">
+                                <div className="w-5 text-center text-[10px] font-bold text-muted-foreground/60 flex-shrink-0 select-none">
                                     {row}
                                 </div>
                                 {seatsByRow[row]
@@ -496,7 +508,7 @@ const SeatSelectionPage = () => {
                                         );
                                     })}
                                 {/* Right row label */}
-                                <div className="w-5 text-center text-[10px] font-bold text-zinc-400 dark:text-zinc-600 flex-shrink-0 select-none">
+                                <div className="w-5 text-center text-[10px] font-bold text-muted-foreground/60 flex-shrink-0 select-none">
                                     {row}
                                 </div>
                             </div>
@@ -533,11 +545,11 @@ const SeatSelectionPage = () => {
     const screenIndicator = (
         <div className="my-10 px-4 relative flex flex-col items-center select-none">
             {/* Curved cinema screen reflecting projector light */}
-            <div className="w-72 sm:w-96 h-4 border-t-2 border-blue-400/50 dark:border-blue-400/80 rounded-[50%/10px_10px_0_0] relative shadow-[0_-8px_24px_-4px_rgba(96,165,250,0.25)]">
+            <div className="w-72 sm:w-96 h-4 border-t-2 border-info/50 dark:border-info/80 rounded-[50%/10px_10px_0_0] relative shadow-[0_-8px_24px_-4px_var(--color-info)]">
                 {/* Projector cone light beam fading down */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-28 bg-gradient-to-b from-blue-400/12 via-blue-400/3 to-transparent blur-md pointer-events-none rounded-[50%/0_0_20px_20px]" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-28 bg-gradient-to-b from-info/12 via-info/3 to-transparent blur-md pointer-events-none rounded-[50%/0_0_20px_20px]" />
             </div>
-            <p className="text-center text-[9px] font-bold tracking-[0.4em] text-blue-400 dark:text-blue-400/90 uppercase mt-3">
+            <p className="text-center text-[9px] font-bold tracking-[0.4em] text-info uppercase mt-3">
                 All Eyes This Way
             </p>
         </div>
@@ -552,14 +564,14 @@ const SeatSelectionPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-background pb-28">
+        <div className="min-h-screen bg-background pb-28 text-foreground">
             {/* Sticky Header - Glassmorphic Frosted Bar */}
-            <div className="sticky top-0 z-35 backdrop-blur-md bg-background/80 border-b border-zinc-200/30 dark:border-zinc-800/40 shadow-sm transition-all duration-300">
+            <div className="sticky top-0 z-35 backdrop-blur-md bg-background/80 border-b border-border/60 shadow-sm transition-all duration-300">
                 <div className="container mx-auto px-3 sm:px-6 lg:px-14 py-2.5">
                     <div className="flex items-center gap-2 sm:gap-4">
                         <button
-                                                            onClick={() => navigate(-1)}
-                                                            className="p-2 bg-zinc-100/50 dark:bg-zinc-800/35 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/40 dark:border-zinc-700/20 rounded-xl transition flex-shrink-0 cursor-pointer custom-hover"
+                            onClick={() => navigate(-1)}
+                            className="p-2 bg-secondary/40 hover:bg-secondary/70 border border-border/60 rounded-xl transition flex-shrink-0 cursor-pointer custom-hover"
                         >
                             <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -567,7 +579,7 @@ const SeatSelectionPage = () => {
                         </button>
 
                         {showData.movie?.poster_url && (
-                            <div className="h-14 w-10 sm:h-16 sm:w-11 rounded-lg overflow-hidden flex-shrink-0 bg-muted border border-zinc-200/50 dark:border-zinc-800/40 shadow-sm">
+                            <div className="h-14 w-10 sm:h-16 sm:w-11 rounded-lg overflow-hidden flex-shrink-0 bg-muted border border-border/60 shadow-sm">
                                 <img
                                     src={showData.movie.poster_url}
                                     alt={showData.movie.title}
@@ -579,7 +591,7 @@ const SeatSelectionPage = () => {
                         <div className="flex-1 min-w-0">
                             <h1 className="text-sm sm:text-base font-bold leading-tight truncate text-foreground">
                                 {showData.movie?.title}
-                                <span className="text-xs font-medium text-muted-foreground ml-2 hidden sm:inline-block">
+                                <span className="text-xs font-medium text-muted-foreground ml-2 hidden sm:inline-block font-sans">
                                     ({showData.show_details?.language_version || showData.movie?.language?.join(', ') || 'Tamil'})
                                 </span>
                             </h1>
@@ -587,13 +599,13 @@ const SeatSelectionPage = () => {
                                 {showData.cinema_hall?.name || showData.screen?.name}
                             </p>
                             <div className="flex flex-wrap items-center gap-2 mt-1">
-                                <span className="bg-[#f84464] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm shadow-[#f84464]/20">
+                                <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm shadow-primary/20">
                                     {showData.show_details?.start_time ? formatTime(showData.show_details.start_time) : ''}
                                 </span>
                                 <span className="text-[10px] font-semibold text-muted-foreground hidden sm:inline-block">
                                     {showData.show_details?.show_date}
                                 </span>
-                                <span className="text-[10px] font-bold border border-zinc-200 dark:border-zinc-800 rounded px-1.5 py-0.5 text-muted-foreground bg-zinc-50/5 dark:bg-zinc-800/10">
+                                <span className="text-[10px] font-bold border border-border rounded px-1.5 py-0.5 text-muted-foreground bg-secondary/20">
                                     {showData.screen?.screen_type || '2D'}
                                 </span>
                             </div>
@@ -604,19 +616,19 @@ const SeatSelectionPage = () => {
 
             {/* Seat Layout Area */}
             <div className="py-4 sm:py-6 px-2 sm:px-4 lg:px-14">
-                <div className="bg-gradient-to-b from-zinc-50/50 to-zinc-100/50 dark:from-zinc-950/40 dark:to-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-inner relative">
+                <div className="bg-card/75 border border-border/80 rounded-2xl overflow-hidden shadow-inner relative">
                     
                     {/* Thematic Ambient glow behind seating container */}
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.03),transparent_70%)] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,oklch(from_var(--info)_l_c_h_/_0.04),transparent_70%)] pointer-events-none" />
 
                     {/* Legend + pan toggle */}
-                    <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-3 border-b border-zinc-200/20 dark:border-zinc-800/20 relative z-10 select-none">
+                    <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-3 border-b border-border/40 relative z-10 select-none">
                         <div className="flex items-center gap-3 sm:gap-6">
                             {seatCount && (
                                 <button
                                     onClick={() => setShowSeatCountModal(true)}
                                     title="Click to change number of seats"
-                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#f84464]/10 border border-[#f84464]/20 text-[#f84464] text-[10px] font-bold uppercase tracking-wider hover:bg-[#f84464]/20 hover:scale-105 active:scale-95 transition-all cursor-pointer custom-hover"
+                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider hover:bg-primary/20 hover:scale-105 active:scale-95 transition-all cursor-pointer custom-hover"
                                 >
                                     <Users className="w-3.5 h-3.5" />
                                     <span>{seatCount} seat{seatCount > 1 ? 's' : ''}</span>
@@ -624,15 +636,15 @@ const SeatSelectionPage = () => {
                             )}
                             <div className="flex gap-5 sm:gap-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] border border-zinc-400 dark:border-zinc-600 border-b-2 bg-zinc-100/5" />
+                                    <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] border border-muted-foreground/60 border-b-2 bg-secondary/25" />
                                     <span>Available</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] bg-zinc-200/50 dark:bg-zinc-800/40 border border-zinc-300 dark:border-zinc-800/60 border-b-2 opacity-35" />
+                                    <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] bg-secondary/45 border border-border/60 border-b-2 opacity-30" />
                                     <span>Sold</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] bg-emerald-500 border border-emerald-500 border-b-2 border-b-emerald-600 shadow-sm" />
+                                    <div className="w-3.5 h-3.5 rounded-t-[3px] rounded-b-[1px] bg-success border border-success border-b-2 border-b-success/80 shadow-sm" />
                                     <span>Selected</span>
                                 </div>
                             </div>
@@ -642,8 +654,8 @@ const SeatSelectionPage = () => {
                             title={isPanMode ? 'Switch to Select mode' : 'Switch to Pan mode'}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all duration-200 flex-shrink-0 cursor-pointer custom-hover ${
                                 isPanMode
-                                    ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 shadow-sm'
-                                    : 'bg-zinc-100 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-800 text-muted-foreground hover:text-foreground hover:border-zinc-400 dark:hover:border-zinc-600'
+                                    ? 'bg-info/10 border-info/30 text-info shadow-sm'
+                                    : 'bg-secondary/40 border border-border text-muted-foreground hover:text-foreground hover:border-border/60'
                             }`}
                         >
                             {isPanMode
@@ -662,7 +674,7 @@ const SeatSelectionPage = () => {
                                 onClick={() => setZoom(z => Math.min(MAX_ZOOM, parseFloat((z + ZOOM_STEP).toFixed(1))))}
                                 disabled={zoom >= MAX_ZOOM}
                                 title="Zoom in"
-                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 custom-hover"
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-card border border-border shadow-lg text-foreground hover:bg-secondary/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 custom-hover"
                             >
                                 <ZoomIn className="w-4 h-4" />
                             </button>
@@ -670,11 +682,11 @@ const SeatSelectionPage = () => {
                                 onClick={() => setZoom(z => Math.max(MIN_ZOOM, parseFloat((z - ZOOM_STEP).toFixed(1))))}
                                 disabled={zoom <= MIN_ZOOM}
                                 title="Zoom out"
-                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 custom-hover"
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-card border border-border shadow-lg text-foreground hover:bg-secondary/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 custom-hover"
                             >
                                 <ZoomOut className="w-4 h-4" />
                             </button>
-                            <div className="w-8 h-6 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md text-foreground/90 text-[8px] sm:text-[9px] font-black select-none">
+                            <div className="w-8 h-6 flex items-center justify-center rounded-xl bg-card border border-border shadow-md text-foreground/90 text-[8px] sm:text-[9px] font-black select-none">
                                 {Math.round(zoom * 100)}%
                             </div>
                         </div>
@@ -700,23 +712,23 @@ const SeatSelectionPage = () => {
 
             {/* Floating Checkout Dock */}
             {selectedSeats.length > 0 && (
-                <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl bg-white/90 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200/40 dark:border-zinc-800/60 shadow-[0_12px_45px_rgba(0,0,0,0.22)] rounded-2xl z-30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
+                <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl bg-card/90 backdrop-blur-md border border-border/60 shadow-[0_12px_45px_rgba(0,0,0,0.15)] rounded-2xl z-30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5">
                     <div className="px-5 py-4 flex items-center justify-between gap-3">
                         <div>
                             <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                 <span>{seatCount ? `${selectedSeats.length}/${seatCount} Selected` : `${selectedSeats.length} Selected`}</span>
                                 {getSeatLabels().length > 0 && (
-                                    <span className="bg-zinc-100 dark:bg-zinc-800 text-foreground px-1.5 py-0.5 rounded text-[9px] font-extrabold tracking-normal">
+                                    <span className="bg-secondary text-foreground px-1.5 py-0.5 rounded text-[9px] font-extrabold tracking-normal">
                                         {getSeatLabels().join(', ')}
                                     </span>
                                 )}
                             </p>
-                            <p className="text-xl font-black text-foreground mt-0.5">₹{calculateTotal()}</p>
+                            <p className="text-xl font-bold font-mono text-foreground mt-0.5">₹{calculateTotal()}</p>
                         </div>
                         <button
                             onClick={handleProceed}
                             disabled={isProcessing}
-                            className="bg-[#f84464] hover:bg-[#e23655] active:bg-[#c92844] text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-[#f84464]/20 hover:shadow-[#f84464]/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:pointer-events-none custom-hover"
+                            className="bg-primary hover:bg-primary/95 text-primary-foreground px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:pointer-events-none custom-hover"
                         >
                             {isProcessing ? 'Processing...' : 'Proceed to Payment'}
                         </button>
@@ -726,8 +738,8 @@ const SeatSelectionPage = () => {
 
             {/* Fixed minimap panel — top-right, below sticky header, desktop only */}
             {isOverflowing && (
-                <div className="fixed top-[72px] right-3 z-30 hidden sm:flex flex-col rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-xl bg-white dark:bg-zinc-900">
-                    <div className="px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-gray-400 dark:text-zinc-500 border-b border-gray-100 dark:border-zinc-800 select-none">
+                <div className="fixed top-[72px] right-3 z-30 hidden sm:flex flex-col rounded-xl overflow-hidden border border-border/80 shadow-xl bg-card">
+                    <div className="px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-muted-foreground/60 border-b border-border/40 select-none">
                         Layout Overview
                     </div>
                     <canvas

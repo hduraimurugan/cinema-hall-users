@@ -55,6 +55,11 @@ html, body {
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-info: var(--info);
+  --color-offer: var(--offer);
+  --color-warning: var(--warning);
 }
 
 :root {
@@ -94,6 +99,12 @@ html, body {
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+
+  --success: oklch(0.62 0.17 145);
+  --success-foreground: oklch(0.98 0.01 145);
+  --info: oklch(0.6 0.18 250);
+  --offer: oklch(0.55 0.18 290);
+  --warning: oklch(0.7 0.15 60);
 }
 
 .dark {
@@ -131,6 +142,12 @@ html, body {
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+
+  --success: oklch(0.68 0.16 145);
+  --success-foreground: oklch(0.12 0.02 145);
+  --info: oklch(0.68 0.16 250);
+  --offer: oklch(0.65 0.16 290);
+  --warning: oklch(0.75 0.14 60);
 }
 
 
