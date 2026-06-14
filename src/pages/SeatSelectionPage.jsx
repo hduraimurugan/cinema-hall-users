@@ -731,6 +731,8 @@ const SeatSelectionPage = () => {
             <SeatCountModal
                 open={showSeatCountModal}
                 onConfirm={handleConfirmSeatCount}
+                showData={showData}
+                getSeatPrice={getSeatPrice}
             />
             <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
         </div>
