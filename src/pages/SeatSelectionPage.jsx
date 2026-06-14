@@ -613,10 +613,14 @@ const SeatSelectionPage = () => {
                     <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-3 border-b border-zinc-200/20 dark:border-zinc-800/20 relative z-10 select-none">
                         <div className="flex items-center gap-3 sm:gap-6">
                             {seatCount && (
-                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#f84464]/10 border border-[#f84464]/20 text-[#f84464] text-[10px] font-bold uppercase tracking-wider">
+                                <button
+                                    onClick={() => setShowSeatCountModal(true)}
+                                    title="Click to change number of seats"
+                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#f84464]/10 border border-[#f84464]/20 text-[#f84464] text-[10px] font-bold uppercase tracking-wider hover:bg-[#f84464]/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                >
                                     <Users className="w-3.5 h-3.5" />
                                     <span>{seatCount} seat{seatCount > 1 ? 's' : ''}</span>
-                                </div>
+                                </button>
                             )}
                             <div className="flex gap-5 sm:gap-6 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                 <div className="flex items-center gap-2">
@@ -741,6 +745,7 @@ const SeatSelectionPage = () => {
             <SeatCountModal
                 open={showSeatCountModal}
                 onConfirm={handleConfirmSeatCount}
+                onClose={seatCount ? () => setShowSeatCountModal(false) : null}
                 showData={showData}
                 getSeatPrice={getSeatPrice}
             />
