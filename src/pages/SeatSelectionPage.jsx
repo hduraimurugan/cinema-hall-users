@@ -4,7 +4,7 @@ import { showsAPI, bookingAPI } from '../services/api';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
 import { LoginModal } from '../components/LoginModal';
-import { Hand, MousePointer2, ZoomIn, ZoomOut, Users } from 'lucide-react';
+import { Hand, MousePointer2, ZoomIn, ZoomOut, Users, Grid } from 'lucide-react';
 import { findBestAdjacentSeats } from '../utils/seatSelection';
 import { SeatCountModal } from '../components/SeatCountModal';
 
@@ -203,9 +203,10 @@ const SeatSelectionPage = () => {
         const SEAT_W = 28, SEAT_GAP = 4, ROW_LABEL_W = 28;
         const AISLE_COL_W = 16, AISLE_ROW_H = 12, ROW_H = 34;
         const SECTION_TITLE_H = 40, SECTION_MB = 40;
+        const SCREEN_H = 120; // Height offset matching the screenIndicator DOM element
         const PAD_X = 32; // px-8 on inner div
-
-        let yOffset = 0;
+        const screenPos = showData?.screen?.layout?.screenPosition || 'bottom';
+        let yOffset = screenPos === 'top' ? SCREEN_H : 0;
         ['premium', 'gold', 'silver'].forEach((type) => {
             const sectionSeats = seats.filter(s => s.type === type);
             if (!sectionSeats.length) return;
@@ -271,17 +272,61 @@ const SeatSelectionPage = () => {
         const style = window.getComputedStyle(document.documentElement);
         const getVal = (name, fallback) => style.getPropertyValue(name).trim() || fallback;
 
-        const cardVal = getVal('--card', isDark ? '#18181b' : '#fafafa');
-        const borderVal = getVal('--border', isDark ? '#27272a' : '#e4e4e7');
-        const mutedForegroundVal = getVal('--muted-foreground', isDark ? '#71717a' : '#a1a1aa');
-        const primaryVal = getVal('--primary', '#f84464');
         const successVal = getVal('--success', '#10b981');
         const infoVal = getVal('--info', '#3b82f6');
-        const warningVal = getVal('--warning', '#eab308');
 
-        // Background
-        ctx.fillStyle = cardVal;
-        ctx.fillRect(0, 0, logicalW, logicalH);
+        // Clear canvas to keep it transparent so CSS glassmorphism shows through
+        ctx.clearRect(0, 0, logicalW, logicalH);
+
+        // Draw cinema screen curve and reflection glow in the layout overview
+        const screenPos = showData?.screen?.layout?.screenPosition || 'bottom';
+        const screenY = screenPos === 'top' ? 18 : logicalH - 18;
+
+        ctx.beginPath();
+        ctx.moveTo(logicalW * 0.25, screenY);
+        ctx.quadraticCurveTo(
+            logicalW * 0.5,
+            screenY + (screenPos === 'top' ? 8 : -8),
+            logicalW * 0.75,
+            screenY
+        );
+        ctx.strokeStyle = infoVal;
+        ctx.lineWidth = 1.75;
+        ctx.stroke();
+
+        // Screen reflection glow
+        const gradient = ctx.createLinearGradient(0, screenY, 0, screenY + (screenPos === 'top' ? 18 : -18));
+        gradient.addColorStop(0, isDark ? 'rgba(59, 130, 246, 0.22)' : 'rgba(59, 130, 246, 0.12)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        ctx.beginPath();
+        ctx.moveTo(logicalW * 0.25, screenY);
+        ctx.quadraticCurveTo(
+            logicalW * 0.5,
+            screenY + (screenPos === 'top' ? 8 : -8),
+            logicalW * 0.75,
+            screenY
+        );
+        ctx.lineTo(logicalW * 0.75, screenY + (screenPos === 'top' ? 18 : -18));
+        ctx.quadraticCurveTo(
+            logicalW * 0.5,
+            screenY + (screenPos === 'top' ? 26 : -26),
+            logicalW * 0.25,
+            screenY + (screenPos === 'top' ? 18 : -18)
+        );
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // "SCREEN" label text
+        ctx.fillStyle = infoVal;
+        ctx.font = 'bold 7px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+            'SCREEN',
+            logicalW * 0.5,
+            screenY + (screenPos === 'top' ? -4 : 12)
+        );
 
         // Seats
         const allSeats = showData.screen?.layout?.seats || [];
@@ -295,18 +340,32 @@ const SeatSelectionPage = () => {
             const mw = Math.max(SEAT_W_PX * scaleX, 1.5);
             const mh = Math.max(SEAT_H_PX * scaleY, 1.5);
 
+            ctx.beginPath();
+
             if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') {
-                ctx.fillStyle = isDark ? '#27272a' : '#e4e4e7';
+                // Dimly colored booked seats (zinc-like gray dots with low opacity)
+                ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.08)';
             } else if (selectedSeats.includes(seat.id)) {
+                // Vibrant success green for active selection
                 ctx.fillStyle = successVal;
             } else if (seat.type === 'premium') {
-                ctx.fillStyle = primaryVal;
+                // Soft brand red tint for available premium
+                ctx.fillStyle = isDark ? 'rgba(248, 68, 100, 0.35)' : 'rgba(248, 68, 100, 0.25)';
             } else if (seat.type === 'gold') {
-                ctx.fillStyle = warningVal;
+                // Soft orange-yellow tint for available gold
+                ctx.fillStyle = isDark ? 'rgba(234, 179, 8, 0.35)' : 'rgba(234, 179, 8, 0.25)';
             } else {
-                ctx.fillStyle = mutedForegroundVal;
+                // Soft cool-gray for available silver
+                ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.15)';
             }
-            ctx.fillRect(mx, my, mw, mh);
+
+            // Draw seats with clean, subtle roundness
+            if (ctx.roundRect) {
+                ctx.roundRect(mx, my, mw, mh, 1);
+            } else {
+                ctx.rect(mx, my, mw, mh);
+            }
+            ctx.fill();
         });
 
         // Viewport rectangle overlay
@@ -315,11 +374,19 @@ const SeatSelectionPage = () => {
         const vpW = scrollEl.clientWidth * scaleX;
         const vpH = scrollEl.clientHeight * scaleY;
 
-        ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.04)';
-        ctx.fillRect(vpLeft, vpTop, vpW, vpH);
+        // Draw viewport box with rounded corners and glowing border
+        ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.06)' : 'rgba(59, 130, 246, 0.03)';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(vpLeft, vpTop, vpW, vpH, 3);
+        } else {
+            ctx.rect(vpLeft, vpTop, vpW, vpH);
+        }
+        ctx.fill();
+
         ctx.strokeStyle = infoVal;
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(vpLeft, vpTop, vpW, vpH);
+        ctx.lineWidth = 1.25;
+        ctx.stroke();
 
         ctx.restore();
     }, [showData, selectedSeats, seatPositionMap]);
@@ -441,7 +508,7 @@ const SeatSelectionPage = () => {
         setIsOverflowing(scrollEl.scrollWidth > scrollEl.clientWidth);
     }, [zoom]);
 
-     const formatTime = (timeString) => {
+    const formatTime = (timeString) => {
         const [hours, minutes] = timeString.split(':');
         const hour = parseInt(hours);
         const ampm = hour >= 12 ? 'PM' : 'AM';
@@ -474,7 +541,7 @@ const SeatSelectionPage = () => {
                     </span>
                     <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-border/60" />
                 </div>
-                
+
                 <div className="space-y-1.5">
                     {sortedRows.map((row) => (
                         <React.Fragment key={row}>
@@ -617,7 +684,7 @@ const SeatSelectionPage = () => {
             {/* Seat Layout Area */}
             <div className="py-4 sm:py-6 px-2 sm:px-4 lg:px-14">
                 <div className="bg-card/75 border border-border/80 rounded-2xl overflow-hidden shadow-inner relative">
-                    
+
                     {/* Thematic Ambient glow behind seating container */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,oklch(from_var(--info)_l_c_h_/_0.04),transparent_70%)] pointer-events-none" />
 
@@ -652,11 +719,10 @@ const SeatSelectionPage = () => {
                         <button
                             onClick={togglePanMode}
                             title={isPanMode ? 'Switch to Select mode' : 'Switch to Pan mode'}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all duration-200 flex-shrink-0 cursor-pointer custom-hover ${
-                                isPanMode
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all duration-200 flex-shrink-0 cursor-pointer custom-hover ${isPanMode
                                     ? 'bg-info/10 border-info/30 text-info shadow-sm'
                                     : 'bg-secondary/40 border border-border text-muted-foreground hover:text-foreground hover:border-border/60'
-                            }`}
+                                }`}
                         >
                             {isPanMode
                                 ? <Hand className="w-3.5 h-3.5" />
@@ -738,9 +804,10 @@ const SeatSelectionPage = () => {
 
             {/* Fixed minimap panel — top-right, below sticky header, desktop only */}
             {isOverflowing && (
-                <div className="fixed top-[72px] right-3 z-30 hidden sm:flex flex-col rounded-xl overflow-hidden border border-border/80 shadow-xl bg-card">
-                    <div className="px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-muted-foreground/60 border-b border-border/40 select-none">
-                        Layout Overview
+                <div className="fixed top-[196px] right-4 z-30 hidden sm:flex flex-col rounded-2xl overflow-hidden border border-border/50 shadow-2xl bg-card/75 backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-primary/5">
+                    <div className="px-4 py-2.5 text-[10px] font-extrabold tracking-widest uppercase text-muted-foreground/80 border-b border-border/40 select-none bg-secondary/10 flex items-center gap-2">
+                        <Grid className="w-3.5 h-3.5 text-primary" />
+                        <span>Layout Overview</span>
                     </div>
                     <canvas
                         ref={minimapCanvasRef}
