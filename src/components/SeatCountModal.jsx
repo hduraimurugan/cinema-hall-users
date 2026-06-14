@@ -452,11 +452,13 @@ function VehicleIllustration({ count }) {
   );
 }
 
-export function SeatCountModal({ open, onConfirm, showData, getSeatPrice }) {
+export function SeatCountModal({ open, onConfirm, onClose, showData, getSeatPrice }) {
   const [count, setCount] = useState(2); // Default to typical 2 tickets
 
-  const handleOpenChange = () => {
-    // Intentionally no-op — user must pick a count before closing
+  const handleOpenChange = (isOpen) => {
+    if (!isOpen && onClose) {
+      onClose();
+    }
   };
 
   // Group seats by category and calculate availability
@@ -524,7 +526,7 @@ export function SeatCountModal({ open, onConfirm, showData, getSeatPrice }) {
       <DialogContent className="sm:max-w-md bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-white/20 dark:border-zinc-800/40 shadow-2xl rounded-2xl p-6 transition-all duration-300">
         <style>{`
           [data-slot="dialog-content"] > button:last-child {
-            display: none;
+            display: ${onClose ? 'block' : 'none'} !important;
           }
           .scrollbar-none::-webkit-scrollbar {
             display: none;
