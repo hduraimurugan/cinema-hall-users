@@ -45,6 +45,7 @@ const HeroSlide = ({ movie, isActive }) => {
       <div className="absolute inset-0">
         <LazyLoadImage
           src={
+            movie.backdrop_path ||
             movie.poster_url ||
             'https://placehold.co/1200x600/1a1a2e/FFFFFF?text=No+Poster'
           }
