@@ -277,12 +277,12 @@ button.bg-secondary:hover:not(:disabled),
 }
 
 /* Outline and Ghost Buttons Hover: Sleek premium glassmorphism instead of muddy dark colors */
-button.border:hover:not(:disabled),
-[data-slot="button"].border:hover:not(:disabled),
-button[class*="hover:bg-accent"]:hover:not(:disabled),
-[data-slot="button"][class*="hover:bg-accent"]:hover:not(:disabled),
-button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):hover:not(:disabled),
-[data-slot="button"]:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):hover:not(:disabled) {
+button.border:not(.bg-emerald-500):hover:not(:disabled),
+[data-slot="button"].border:not(.bg-emerald-500):hover:not(:disabled),
+button[class*="hover:bg-accent"]:not(.bg-emerald-500):hover:not(:disabled),
+[data-slot="button"][class*="hover:bg-accent"]:not(.bg-emerald-500):hover:not(:disabled),
+button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):not(.bg-emerald-500):hover:not(:disabled),
+[data-slot="button"]:not(.bg-primary):not(.bg-destructive):not(.bg-secondary):not(.bg-emerald-500):hover:not(:disabled) {
   background-color: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.25) !important;

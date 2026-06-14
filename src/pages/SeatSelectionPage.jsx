@@ -4,7 +4,9 @@ import { showsAPI, bookingAPI } from '../services/api';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
 import { LoginModal } from '../components/LoginModal';
-import { Hand, MousePointer2, ZoomIn, ZoomOut } from 'lucide-react';
+import { Hand, MousePointer2, ZoomIn, ZoomOut, Users } from 'lucide-react';
+import { findBestAdjacentSeats } from '../utils/seatSelection';
+import { SeatCountModal } from '../components/SeatCountModal';
 
 const SeatSelectionPage = () => {
     const { showId } = useParams();
@@ -13,6 +15,8 @@ const SeatSelectionPage = () => {
 
     const [showData, setShowData] = useState(null);
     const [selectedSeats, setSelectedSeats] = useState([]);
+    const [seatCount, setSeatCount] = useState(null);
+    const [showSeatCountModal, setShowSeatCountModal] = useState(true);
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
     const [loginOpen, setLoginOpen] = useState(false);
@@ -86,9 +90,37 @@ const SeatSelectionPage = () => {
     const toggleSeat = (seat) => {
         if (isPanMode) return;
         if (seat.status === 'booked' || seat.status === 'BOOKED' || seat.status === 'HELD') return;
-        setSelectedSeats(prev =>
-            prev.includes(seat.id) ? prev.filter(id => id !== seat.id) : [...prev, seat.id]
+        if (seat.type === 'passage' || seat.isBlocked || seat.status === 'blocked') return;
+
+        if (!seatCount) {
+            setShowSeatCountModal(true);
+            return;
+        }
+
+        if (selectedSeats.includes(seat.id)) {
+            setSelectedSeats([]);
+            return;
+        }
+
+        const adjacentSeats = findBestAdjacentSeats(
+            seat,
+            seatCount,
+            showData?.screen?.layout?.seats || []
         );
+
+        if (adjacentSeats.length === seatCount) {
+            setSelectedSeats(adjacentSeats);
+        } else {
+            toast.error(`Unable to find ${seatCount} adjacent seats near your selection.`);
+            setSelectedSeats([]);
+        }
+    };
+
+    const handleConfirmSeatCount = (count) => {
+        setSeatCount(count);
+        setShowSeatCountModal(false);
+        setSelectedSeats([]);
+        toast.info(`Select ${count} adjacent seat${count > 1 ? 's' : ''} by clicking any available seat`);
     };
 
     const handleProceed = async () => {
@@ -568,7 +600,14 @@ const SeatSelectionPage = () => {
 
                     {/* Legend + pan toggle */}
                     <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-2">
-                        <div className="flex gap-5 sm:gap-8 text-[11px] sm:text-xs text-gray-500 dark:text-zinc-400">
+                        <div className="flex items-center gap-3 sm:gap-6">
+                            {seatCount && (
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 text-primary text-[11px] sm:text-xs font-medium">
+                                    <Users className="w-3 h-3" />
+                                    <span>{seatCount} seat{seatCount > 1 ? 's' : ''}</span>
+                                </div>
+                            )}
+                            <div className="flex gap-5 sm:gap-8 text-[11px] sm:text-xs text-gray-500 dark:text-zinc-400">
                             <div className="flex items-center gap-1.5">
                                 <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm border border-gray-400 dark:border-zinc-500" />
                                 <span>Available</span>
@@ -580,6 +619,7 @@ const SeatSelectionPage = () => {
                             <div className="flex items-center gap-1.5">
                                 <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm bg-emerald-500" />
                                 <span>Selected</span>
+                            </div>
                             </div>
                         </div>
                         <button
@@ -649,7 +689,13 @@ const SeatSelectionPage = () => {
                     <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-3 flex items-center justify-between gap-3">
                         <div>
                             <p className="text-xs text-muted-foreground">
-                                {selectedSeats.length} Ticket{selectedSeats.length > 1 ? 's' : ''}
+                                {seatCount ? `${selectedSeats.length}/${seatCount} selected` : `${selectedSeats.length} selected`}
+                                {selectedSeats.length > 1 ? '  •  ' : ''}
+                                {getSeatLabels().length > 0 && (
+                                    <span className="hidden sm:inline ml-1">
+                                        {getSeatLabels().join(', ')}
+                                    </span>
+                                )}
                             </p>
                             <p className="text-lg font-bold leading-tight">₹{calculateTotal()}</p>
                         </div>
@@ -682,6 +728,10 @@ const SeatSelectionPage = () => {
                 </div>
             )}
 
+            <SeatCountModal
+                open={showSeatCountModal}
+                onConfirm={handleConfirmSeatCount}
+            />
             <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
         </div>
     );
