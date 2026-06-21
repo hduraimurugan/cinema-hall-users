@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Star, ChevronLeft, ChevronRight, Ticket, Clock, Film } from 'lucide-react';
+import { Star, ChevronLeft, ChevronRight, Ticket, Clock, Film, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { customerMoviesAPI } from '../services/api';
 import { Skeleton } from './ui/skeleton';
@@ -65,7 +65,7 @@ const MovieCard = ({ movie, showBookNow = true }) => {
       aria-label={`${movie.title}${movie.rating ? `, rated ${movie.rating}` : ''}`}
       className="group cursor-pointer flex-shrink-0 w-full focus-ring"
     >
-      <div className="relative overflow-hidden rounded-2xl shadow-md card-hover bg-card">
+      <div className="relative overflow-hidden rounded-2xl shadow-md card-hover bg-card border border-border/40 card-glow-border">
         {/* Poster */}
         <LazyLoadImage
           src={movie.poster_url || 'https://placehold.co/300x450/1a1a2e/FFFFFF?text=No+Poster'}
@@ -76,23 +76,23 @@ const MovieCard = ({ movie, showBookNow = true }) => {
         />
 
         {/* Subtle bottom gradient for text readability */}
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/65 via-black/20 to-transparent pointer-events-none" />
 
         {/* Always-visible rating badge */}
         {movie.rating && (
-          <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-0.5 shadow-sm">
-            <Star className="w-3 h-3 fill-rating text-rating" />
-            <span className="text-white text-xs font-bold">{movie.rating}</span>
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/65 backdrop-blur-md rounded-full pl-1.5 pr-2.5 py-1 shadow-lg shadow-black/20">
+            <Star className="w-3.5 h-3.5 fill-rating text-rating" />
+            <span className="text-white text-xs font-bold tabular-nums">{movie.rating}</span>
           </div>
         )}
 
         {/* Genre tags - bottom left, always visible */}
         {genres.length > 0 && (
-          <div className="absolute bottom-2.5 left-2.5 flex flex-wrap gap-1 max-w-[70%]">
+          <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5 max-w-[70%]">
             {genres.slice(0, 2).map((g) => (
               <span
                 key={g}
-                className="text-[10px] font-semibold uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white/90 rounded-md px-1.5 py-0.5"
+                className="text-[10px] font-semibold uppercase tracking-wider bg-black/55 backdrop-blur-sm text-white/90 rounded-md px-1.5 py-0.5"
               >
                 {g}
               </span>
@@ -102,10 +102,10 @@ const MovieCard = ({ movie, showBookNow = true }) => {
 
         {/* Book Now overlay - appears on hover */}
         {showBookNow && (
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20">
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-gradient-to-t from-black/40 via-black/10 to-transparent">
             <button
               onClick={handleBookNow}
-              className="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl py-2 px-4 text-xs font-bold shadow-lg shadow-primary/30 transition-all duration-200 scale-90 group-hover:scale-100"
+              className="custom-hover inline-flex items-center gap-1.5 bg-primary hover:bg-primary/90 hover:scale-105 active:scale-95 text-primary-foreground rounded-xl py-2.5 px-5 text-xs font-bold shadow-lg shadow-primary/30 transition-all duration-200 scale-90 group-hover:scale-100"
             >
               <Ticket className="w-3.5 h-3.5" />
               Book Now
@@ -116,16 +116,16 @@ const MovieCard = ({ movie, showBookNow = true }) => {
 
       {/* Content below poster */}
       <div className="mt-3 px-0.5">
-        <h3 className="font-semibold text-sm md:text-base text-foreground line-clamp-1 leading-snug group-hover:text-primary transition-colors duration-200">
+        <h3 className="font-semibold text-sm md:text-[15px] text-foreground line-clamp-1 leading-snug group-hover:text-primary transition-colors duration-200">
           {movie.title}
         </h3>
-        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
           {genres.length > 0 && (
-            <span className="line-clamp-1 max-w-[60%]">{genres.slice(0, 2).join(' / ')}</span>
+            <span className="line-clamp-1 max-w-[55%] font-medium">{genres.slice(0, 2).join(' / ')}</span>
           )}
           {formatDuration(movie.duration_mins) && (
             <>
-              <span className="text-border" aria-hidden="true">|</span>
+              <span className="text-border/60" aria-hidden="true">|</span>
               <span className="flex items-center gap-0.5 shrink-0">
                 <Clock className="w-3 h-3" />
                 {formatDuration(movie.duration_mins)}
@@ -134,7 +134,7 @@ const MovieCard = ({ movie, showBookNow = true }) => {
           )}
         </div>
         {languageText && (
-          <p className="text-[11px] text-muted-foreground/70 mt-1 line-clamp-1">{languageText}</p>
+          <p className="text-[11px] text-muted-foreground/60 mt-1 line-clamp-1">{languageText}</p>
         )}
       </div>
     </div>
@@ -150,9 +150,10 @@ const SectionHeader = ({ title, onViewAll }) => (
     {onViewAll && (
       <button
         onClick={onViewAll}
-        className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+        className="group inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
       >
         View All
+        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
       </button>
     )}
   </div>
@@ -310,7 +311,7 @@ const MoviesList = ({
             onClick={() => scroll('left')}
             disabled={!canScrollLeft}
             aria-label="Scroll left"
-            className="p-2 rounded-full border border-border bg-card text-foreground hover:bg-muted hover:border-primary/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer shadow-sm"
+            className="p-2 rounded-full arrow-glass text-foreground disabled:opacity-25 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer shadow-sm"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -318,33 +319,47 @@ const MoviesList = ({
             onClick={() => scroll('right')}
             disabled={!canScrollRight}
             aria-label="Scroll right"
-            className="p-2 rounded-full border border-border bg-card text-foreground hover:bg-muted hover:border-primary/30 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer shadow-sm"
+            className="p-2 rounded-full arrow-glass text-foreground disabled:opacity-25 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer shadow-sm"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Scrollable movie row */}
-      <div
-        ref={scrollRef}
-        role="region"
-        aria-label={`${title} movies`}
-        tabIndex={0}
-        onKeyDown={handleScrollKeyDown}
-        className={cn(
-          'flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto pb-3 scroll-snap-x',
-          'no-scrollbar'
-        )}
-      >
-        {movies.map((movie) => (
-          <div
-            key={movie.id}
-            className="w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px] flex-shrink-0 scroll-snap-start"
-          >
-            <MovieCard movie={movie} showBookNow={showBookNow} />
-          </div>
-        ))}
+      {/* Scrollable movie row with fade edges */}
+      <div className="relative">
+        <div
+          className={cn(
+            'scroll-fade-left',
+            canScrollLeft && 'scroll-fade-visible'
+          )}
+        />
+        <div
+          className={cn(
+            'scroll-fade-right',
+            canScrollRight && 'scroll-fade-visible'
+          )}
+        />
+        <div
+          ref={scrollRef}
+          role="region"
+          aria-label={`${title} movies`}
+          tabIndex={0}
+          onKeyDown={handleScrollKeyDown}
+          className={cn(
+            'flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto pb-3 scroll-snap-x',
+            'no-scrollbar'
+          )}
+        >
+          {movies.map((movie) => (
+            <div
+              key={movie.id}
+              className="w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px] flex-shrink-0 scroll-snap-start"
+            >
+              <MovieCard movie={movie} showBookNow={showBookNow} />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

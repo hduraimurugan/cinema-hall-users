@@ -56,6 +56,7 @@ const HeroSlide = ({ movie, isActive }) => {
         />
         <div className="absolute inset-0 hero-gradient-t" />
         <div className="absolute inset-0 hero-gradient-r" />
+        <div className="absolute inset-0 hero-vignette" />
       </div>
 
       <div className="relative h-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex items-end pb-16 sm:pb-20 lg:pb-24">
@@ -97,7 +98,7 @@ const HeroSlide = ({ movie, isActive }) => {
                 e.stopPropagation();
                 navigate(`/movie/shows/${movie.id}`);
               }}
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary text-primary-foreground font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] cursor-pointer"
+              className="custom-hover inline-flex items-center gap-2 bg-primary hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] text-primary-foreground font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 cursor-pointer"
             >
               <Ticket className="size-4" />
               Book Now
@@ -176,6 +177,16 @@ const HeroCarousel = ({ movies }) => {
           ))}
         </div>
       )}
+
+      {/* Autoplay progress bar */}
+      {/* {movies.length > 1 && !isPaused && (
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/10 z-20">
+          <div
+            key={currentIndex}
+            className="h-full bg-primary/70 rounded-r-full animate-hero-progress"
+          />
+        </div>
+      )} */}
     </div>
   );
 };
@@ -250,7 +261,7 @@ const MoviesPage = () => {
             heroMovies.length > 0 ? 'mt-2' : 'mt-6'
           )}
         >
-          <div className="flex items-center gap-2 bg-muted/70 p-1 rounded-xl w-fit">
+          <div className="flex items-center gap-2 glass-effect p-1 rounded-xl w-fit shadow-sm">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -258,8 +269,8 @@ const MoviesPage = () => {
                 className={cn(
                   'relative px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer',
                   activeTab === tab.id
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                 )}
                 aria-pressed={activeTab === tab.id}
               >

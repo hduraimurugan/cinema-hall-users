@@ -333,6 +333,12 @@ html, body {
     100% { background-position: 200% 0; }
   }
 
+  /* Hero autoplay progress bar animation */
+  .animate-hero-progress {
+    animation: hero-progress 5s linear;
+    animation-fill-mode: forwards;
+  }
+
   /* Pill tab active indicator */
   .pill-active {
     background: var(--primary);
@@ -359,6 +365,63 @@ html, body {
   @keyframes hero-progress {
     from { width: 0%; }
     to { width: 100%; }
+  }
+
+  /* Cinematic vignette overlay for hero */
+  .hero-vignette {
+    background: radial-gradient(ellipse at center, transparent 50%, oklch(from var(--background) l c h / 0.4) 100%);
+    pointer-events: none;
+  }
+
+  /* Card premium border glow on hover */
+  .card-glow-border {
+    transition: border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-glow-border:hover {
+    border-color: oklch(from var(--primary) l c h / 0.25);
+    box-shadow: 0 0 20px oklch(from var(--primary) l c h / 0.12), var(--shadow-xl);
+  }
+
+  /* Scroll fade edges for movie rows */
+  .scroll-fade-left,
+  .scroll-fade-right {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 48px;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .scroll-fade-left {
+    left: 0;
+    background: linear-gradient(to right, var(--background), transparent);
+  }
+  .scroll-fade-right {
+    right: 0;
+    background: linear-gradient(to left, var(--background), transparent);
+  }
+  .scroll-fade-visible {
+    opacity: 0.85;
+  }
+
+  /* Enhanced glow shadow for featured elements */
+  .glow-soft {
+    box-shadow: 0 0 30px oklch(from var(--primary) l c h / 0.15);
+  }
+
+  /* Premium glass arrow button */
+  .arrow-glass {
+    backdrop-filter: blur(8px);
+    background: oklch(from var(--card) l c h / 0.85);
+    border: 1px solid oklch(from var(--border) l c h / 0.4);
+  }
+  .arrow-glass:hover {
+    backdrop-filter: blur(12px);
+    background: oklch(from var(--card) l c h / 0.95);
+    border-color: oklch(from var(--primary) l c h / 0.3);
+    box-shadow: 0 0 16px oklch(from var(--primary) l c h / 0.12);
   }
 
   /* Featured badge glow */
