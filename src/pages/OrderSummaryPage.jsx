@@ -341,7 +341,105 @@ const OrderSummaryPage = () => {
             <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-6">
                 <div className="flex flex-col lg:flex-row gap-6 items-start max-w-4xl mx-auto lg:max-w-none">
 
-                    {/* ════ LEFT: Payment + Offers ════ */}
+                    {/* ════ LEFT: Order Summary ════ */}
+                    <div className="w-full lg:w-[45%] bg-card/75 rounded-2xl border border-border/80 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 lg:sticky lg:top-20">
+
+                        {/* Header */}
+                        <div className="px-5 py-4 border-b border-border bg-gradient-to-r from-primary/5 to-secondary/5">
+                            <div className="flex justify-between items-start gap-3">
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-3 mb-1">
+                                        {state.posterUrl && (
+                                            <div className="h-16 w-11 rounded-lg overflow-hidden flex-shrink-0 bg-muted border border-border shadow-sm">
+                                                <img src={state.posterUrl} alt={state.movieTitle} className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        <h3 className="font-bold text-base truncate">
+                                            {state.movieTitle}
+                                        </h3>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                                            <Calendar className="w-3.5 h-3.5 text-primary/80" />{state.showDate}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                                            <Clock className="w-3.5 h-3.5 text-primary/80" />{state.startTime}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1.5 font-semibold">
+                                        {state.language} &bull; {state.screenType}
+                                    </p>
+                                </div>
+                                <span className="text-xs font-bold bg-offer/10 text-offer border border-offer/20 px-3 py-1 rounded-full flex items-center gap-1 flex-shrink-0">
+                                    <Ticket className="w-3.5 h-3.5" />
+                                    {numTickets} {numTickets === 1 ? 'Ticket' : 'Tickets'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Seat info */}
+                        <div className="px-5 py-4 border-b border-border bg-secondary/10">
+                            <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5 font-semibold uppercase tracking-wider">
+                                <Armchair className="w-3.5 h-3.5 text-primary/80" /> Seats Booked
+                            </p>
+                            <p className="text-base font-bold font-mono tracking-wider text-foreground">{seatDisplay}</p>
+                            <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5 text-muted-foreground/75" />{state.cinemaName}
+                            </p>
+                        </div>
+
+                        {/* Price breakdown */}
+                        <div className="px-5 py-4 space-y-3">
+                            <PriceRow
+                                label="Ticket(s) price"
+                                value={`₹${state.totalAmount.toLocaleString('en-IN')}`}
+                                icon={<Ticket className="w-3.5 h-3.5" />}
+                            />
+                            <PriceRow
+                                label="Convenience fee"
+                                sub={settingsLoaded ? `(₹${convenienceFeePerTicket}/ticket)` : ''}
+                                value={settingsLoaded ? `₹${convenienceTotal.toLocaleString('en-IN')}` : '...'}
+                                icon={<CreditCard className="w-3.5 h-3.5" />}
+                            />
+                            {settingsLoaded && gstAmount > 0 && (
+                                <PriceRow
+                                    label="GST"
+                                    sub={`(${gstPercentage}% on conv. fee)`}
+                                    value={`₹${gstAmount.toLocaleString('en-IN')}`}
+                                    icon={<Percent className="w-3.5 h-3.5" />}
+                                />
+                            )}
+                            {appliedOffer && (
+                                <PriceRow
+                                    label="Discount"
+                                    sub={`(${appliedOffer.offer_code})`}
+                                    value={`−₹${appliedOffer.discount_amount.toLocaleString('en-IN')}`}
+                                    highlight
+                                    icon={<Tag className="w-3.5 h-3.5" />}
+                                />
+                            )}
+
+                            <div className="border-t border-border pt-3 flex justify-between items-center">
+                                <span className="font-bold text-sm text-foreground">Amount Payable</span>
+                                <span className="font-bold text-lg font-mono text-foreground">
+                                    {settingsLoaded ? `₹${grandTotal.toLocaleString('en-IN')}` : '...'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Cancel link */}
+                        <div className="px-5 pb-4 border-t border-border pt-3">
+                            <button
+                                onClick={handleCancel}
+                                disabled={isProcessing}
+                                className="text-xs text-muted-foreground hover:text-destructive underline underline-offset-2 transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                                <X className="w-3 h-3" /> Cancel and release seats
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* ════ RIGHT: Payment + Offers ════ */}
                     <div className="w-full lg:w-[55%] space-y-5">
 
                         {/* ── Offers panel ── */}
@@ -559,104 +657,6 @@ const OrderSummaryPage = () => {
                                     </p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* ════ RIGHT: Order Summary ════ */}
-                    <div className="w-full lg:w-[45%] bg-card/75 rounded-2xl border border-border/80 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 lg:sticky lg:top-20">
-
-                        {/* Header */}
-                        <div className="px-5 py-4 border-b border-border bg-gradient-to-r from-primary/5 to-secondary/5">
-                            <div className="flex justify-between items-start gap-3">
-                                <div className="min-w-0">
-                                    <div className="flex items-center gap-3 mb-1">
-                                        {state.posterUrl && (
-                                            <div className="h-16 w-11 rounded-lg overflow-hidden flex-shrink-0 bg-muted border border-border shadow-sm">
-                                                <img src={state.posterUrl} alt={state.movieTitle} className="w-full h-full object-cover" />
-                                            </div>
-                                        )}
-                                        <h3 className="font-bold text-base truncate">
-                                            {state.movieTitle}
-                                        </h3>
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
-                                        <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
-                                            <Calendar className="w-3.5 h-3.5 text-primary/80" />{state.showDate}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
-                                            <Clock className="w-3.5 h-3.5 text-primary/80" />{state.startTime}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-1.5 font-semibold">
-                                        {state.language} &bull; {state.screenType}
-                                    </p>
-                                </div>
-                                <span className="text-xs font-bold bg-offer/10 text-offer border border-offer/20 px-3 py-1 rounded-full flex items-center gap-1 flex-shrink-0">
-                                    <Ticket className="w-3.5 h-3.5" />
-                                    {numTickets} {numTickets === 1 ? 'Ticket' : 'Tickets'}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Seat info */}
-                        <div className="px-5 py-4 border-b border-border bg-secondary/10">
-                            <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5 font-semibold uppercase tracking-wider">
-                                <Armchair className="w-3.5 h-3.5 text-primary/80" /> Seats Booked
-                            </p>
-                            <p className="text-base font-bold font-mono tracking-wider text-foreground">{seatDisplay}</p>
-                            <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-                                <MapPin className="w-3.5 h-3.5 text-muted-foreground/75" />{state.cinemaName}
-                            </p>
-                        </div>
-
-                        {/* Price breakdown */}
-                        <div className="px-5 py-4 space-y-3">
-                            <PriceRow
-                                label="Ticket(s) price"
-                                value={`₹${state.totalAmount.toLocaleString('en-IN')}`}
-                                icon={<Ticket className="w-3.5 h-3.5" />}
-                            />
-                            <PriceRow
-                                label="Convenience fee"
-                                sub={settingsLoaded ? `(₹${convenienceFeePerTicket}/ticket)` : ''}
-                                value={settingsLoaded ? `₹${convenienceTotal.toLocaleString('en-IN')}` : '...'}
-                                icon={<CreditCard className="w-3.5 h-3.5" />}
-                            />
-                            {settingsLoaded && gstAmount > 0 && (
-                                <PriceRow
-                                    label="GST"
-                                    sub={`(${gstPercentage}% on conv. fee)`}
-                                    value={`₹${gstAmount.toLocaleString('en-IN')}`}
-                                    icon={<Percent className="w-3.5 h-3.5" />}
-                                />
-                            )}
-                            {appliedOffer && (
-                                <PriceRow
-                                    label="Discount"
-                                    sub={`(${appliedOffer.offer_code})`}
-                                    value={`−₹${appliedOffer.discount_amount.toLocaleString('en-IN')}`}
-                                    highlight
-                                    icon={<Tag className="w-3.5 h-3.5" />}
-                                />
-                            )}
-
-                            <div className="border-t border-border pt-3 flex justify-between items-center">
-                                <span className="font-bold text-sm text-foreground">Amount Payable</span>
-                                <span className="font-bold text-lg font-mono text-foreground">
-                                    {settingsLoaded ? `₹${grandTotal.toLocaleString('en-IN')}` : '...'}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Cancel link */}
-                        <div className="px-5 pb-4 border-t border-border pt-3">
-                            <button
-                                onClick={handleCancel}
-                                disabled={isProcessing}
-                                className="text-xs text-muted-foreground hover:text-destructive underline underline-offset-2 transition-colors flex items-center gap-1 cursor-pointer"
-                            >
-                                <X className="w-3 h-3" /> Cancel and release seats
-                            </button>
                         </div>
                     </div>
 
