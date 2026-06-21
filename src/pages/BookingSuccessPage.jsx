@@ -1,9 +1,59 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle, Loader2, Download, CalendarDays, Clock, Ticket, Hash } from 'lucide-react';
+import {
+  CheckCircle, Loader2, Download, CalendarDays, Clock, Ticket, Hash,
+  CheckCircle2, XCircle, Copy, Check, MapPin, Monitor
+} from 'lucide-react';
 import { bookingAPI } from '../services/api';
 import { toJpeg } from 'html-to-image';
 import { QRCodeSVG } from 'qrcode.react';
+
+const statusConfig = {
+  confirmed: {
+    label: 'Confirmed',
+    icon: CheckCircle2,
+    bg: 'bg-green-500/15',
+    text: 'text-green-600 dark:text-green-400',
+    ring: 'ring-green-500/30',
+    dot: 'bg-green-500',
+  },
+  cancelled: {
+    label: 'Cancelled',
+    icon: XCircle,
+    bg: 'bg-red-500/15',
+    text: 'text-red-600 dark:text-red-400',
+    ring: 'ring-red-500/30',
+    dot: 'bg-red-500',
+  },
+  completed: {
+    label: 'Completed',
+    icon: CheckCircle2,
+    bg: 'bg-blue-500/15',
+    text: 'text-blue-600 dark:text-blue-400',
+    ring: 'ring-blue-500/30',
+    dot: 'bg-blue-500',
+  },
+};
+
+function fmt(value) {
+  return Number(value || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function StatusBadge({ status, config }) {
+  const cfg = config[status] || config.confirmed;
+  const Icon = cfg.icon || CheckCircle2;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${cfg.bg} ${cfg.text} ring-1 ${cfg.ring}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.label}
+    </span>
+  );
+}
 
 const BookingSuccessPage = () => {
     const [searchParams] = useSearchParams();
@@ -14,6 +64,13 @@ const BookingSuccessPage = () => {
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [copied, setCopied] = useState(null);
+
+    const copyText = (key, value) => {
+        navigator.clipboard.writeText(value);
+        setCopied(key);
+        setTimeout(() => setCopied(null), 2000);
+    };
 
     const handleDownload = async () => {
         if (!ticketRef.current) return;
@@ -78,7 +135,8 @@ const BookingSuccessPage = () => {
         ? new Date(booking.show_date).toLocaleDateString('en-IN', { dateStyle: 'long' })
         : '';
     const showTime = booking.start_time ? booking.start_time.slice(0, 5) : '';
-    const bookingId = booking.id?.substring(0, 8).toUpperCase();
+    const bookingShortId = booking.id?.substring(0, 8).toUpperCase();
+    const totalAmount = Number(booking.total_amount || 0);
 
     return (
         <div className="min-h-screen bg-background py-12 px-4 text-foreground">
@@ -99,92 +157,144 @@ const BookingSuccessPage = () => {
                 {/* ── TICKET ── */}
                 <div
                     ref={ticketRef}
-                    className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-2xl"
+                    className="rounded-2xl overflow-hidden shadow-lg border border-border"
                     style={{ fontFamily: 'system-ui, sans-serif' }}
                 >
-                    {/* Ticket Header — dynamic gradient banner */}
+                    {/* Gradient header */}
                     <div
-                        className="px-6 pt-6 pb-5"
+                        className="px-6 pt-6 pb-5 relative"
                         style={{
-                            background: 'linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l - 0.08) c h) 100%)',
+                            background: booking.booking_status === 'cancelled'
+                                ? 'linear-gradient(135deg, #374151 0%, #1f2937 100%)'
+                                : 'linear-gradient(135deg, #e11d48 0%, #be123c 60%, #9f1239 100%)',
                         }}
                     >
-                        <div className="flex items-center gap-2 mb-3 opacity-90">
+                        {/* Branding */}
+                        <div className="flex items-center gap-2 mb-4 opacity-80">
                             <div
                                 className="w-6 h-6 rounded flex items-center justify-center"
-                                style={{ background: 'rgba(255,255,255,0.2)' }}
+                                style={{ background: 'rgba(255,255,255,0.25)' }}
                             >
-                                <span className="text-white text-xs font-black">C</span>
+                                <span style={{ color: '#fff', fontSize: 13, fontWeight: 800 }}>C</span>
                             </div>
-                            <span className="text-white/90 text-xs font-bold tracking-widest">
+                            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em' }}>
                                 CINEMAX
                             </span>
                         </div>
-                        <h2 className="text-white text-2xl font-extrabold tracking-tight m-0 leading-tight">
-                            {booking.movie_title}
-                        </h2>
-                        <div className="flex items-center gap-3 mt-2 text-white/80 text-xs">
-                            <span className="flex items-center gap-1">
-                                <CalendarDays size={13} />
-                                {showDate}
-                            </span>
-                            {showTime && (
-                                <span className="flex items-center gap-1">
-                                    <Clock size={13} />
-                                    {showTime}
-                                </span>
+
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                                <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 800, margin: 0, lineHeight: 1.25 }}>
+                                    {booking.movie_title}
+                                </h1>
+                                {(booking.genre || booking.language || booking.duration_mins) && (
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+                                        {booking.language && (
+                                            <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>{booking.language}</span>
+                                        )}
+                                        {booking.genre?.length > 0 && (
+                                            <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
+                                                {Array.isArray(booking.genre) ? booking.genre.join(', ') : booking.genre}
+                                            </span>
+                                        )}
+                                        {booking.duration_mins && (
+                                            <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>{booking.duration_mins} min</span>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3">
+                                    <span className="flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>
+                                        <CalendarDays size={13} />
+                                        {showDate}
+                                    </span>
+                                    {showTime && (
+                                        <span className="flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>
+                                            <Clock size={13} />
+                                            {showTime}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
+                                    {booking.cinema_hall_name && (
+                                        <span className="flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>
+                                            <MapPin size={13} />
+                                            {booking.cinema_hall_name}
+                                        </span>
+                                    )}
+                                    {booking.screen_name && (
+                                        <span className="flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>
+                                            <Monitor size={13} />
+                                            {booking.screen_name}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Poster thumbnail */}
+                            {booking.poster_url && (
+                                <img
+                                    src={booking.poster_url.startsWith('https://image.tmdb.org/')
+                                        ? `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"}/api/movies/proxy-image?url=${encodeURIComponent(booking.poster_url)}`
+                                        : booking.poster_url}
+                                    alt={booking.movie_title}
+                                    crossOrigin="anonymous"
+                                    className="w-16 h-24 object-cover rounded-lg shadow-lg shrink-0"
+                                    style={{ border: '2px solid rgba(255,255,255,0.2)' }}
+                                />
                             )}
                         </div>
                     </div>
 
                     {/* Perforated divider */}
-                    <div className="relative flex items-center" style={{ height: 24 }}>
+                    <div className="relative flex items-center bg-card" style={{ height: 24 }}>
                         <div
-                            className="absolute -left-3 w-6 h-6 rounded-full"
-                            style={{ background: 'var(--background, #09090b)', border: '1px solid var(--border)' }}
+                            className="absolute -left-3 w-6 h-6 rounded-full bg-background border border-border"
                         />
                         <div
                             className="flex-1 mx-3"
-                            style={{
-                                borderTop: '2px dashed',
-                                borderColor: 'var(--border, #27272a)',
-                            }}
+                            style={{ borderTop: '2px dashed', borderColor: 'var(--border, #27272a)' }}
                         />
                         <div
-                            className="absolute -right-3 w-6 h-6 rounded-full"
-                            style={{ background: 'var(--background, #09090b)', border: '1px solid var(--border)' }}
+                            className="absolute -right-3 w-6 h-6 rounded-full bg-background border border-border"
                         />
                     </div>
 
-                    {/* Ticket Body */}
-                    <div className="px-6 pb-5">
+                    {/* Ticket body */}
+                    <div className="bg-card px-6 pb-6">
                         {/* Booking ID + Status */}
-                        <div className="grid grid-cols-2 gap-4 mb-5">
+                        <div className="grid grid-cols-2 gap-4 mb-5 pt-1">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1 flex items-center gap-1">
                                     <Hash size={11} /> Booking ID
                                 </p>
-                                <p className="font-mono font-bold text-lg tracking-wider text-foreground">{bookingId}</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="font-mono font-bold text-lg tracking-wider">{bookingShortId}</p>
+                                    <button
+                                        onClick={() => copyText('id', booking.id)}
+                                        className="text-muted-foreground hover:text-foreground transition-colors"
+                                        title="Copy full ID"
+                                    >
+                                        {copied === 'id' ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+                                    </button>
+                                </div>
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Status</p>
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success ring-1 ring-success/20">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
-                                    {booking.booking_status?.charAt(0).toUpperCase() + booking.booking_status?.slice(1)}
-                                </span>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Status</p>
+                                <StatusBadge status={booking.booking_status} config={statusConfig} />
                             </div>
                         </div>
 
                         {/* Seats */}
                         <div className="mb-5">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1">
                                 <Ticket size={11} /> Seats
                             </p>
                             <div className="flex flex-wrap gap-2">
-                                {(booking.seat_labels || []).map((seat, index) => (
+                                {(booking.seat_labels || []).map((seat, idx) => (
                                     <span
-                                        key={index}
-                                        className="px-3 py-1.5 rounded-lg text-sm font-bold bg-secondary text-foreground ring-1 ring-border"
+                                        key={idx}
+                                        className="px-3 py-1.5 rounded-lg text-sm font-bold bg-secondary text-secondary-foreground ring-1 ring-border"
                                     >
                                         {seat}
                                     </span>
@@ -192,31 +302,22 @@ const BookingSuccessPage = () => {
                             </div>
                         </div>
 
-                        {/* Amount */}
-                        <div className="flex items-end justify-between pb-4 border-b border-dashed border-border">
+                        {/* Total */}
+                        <div className="flex items-center justify-between pb-5 border-b border-dashed border-border">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">Total Amount</p>
-                                <p className="text-[10px] text-muted-foreground/75 font-mono">
-                                    {booking.payment_id}
-                                </p>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">Total Paid</p>
+                                <p className="text-3xl font-extrabold tracking-tight">₹{fmt(totalAmount)}</p>
                             </div>
-                            <p className="text-3xl font-extrabold font-mono tracking-tight text-foreground">
-                                ₹{Number(booking.total_amount).toFixed(2)}
-                            </p>
+                            {/* QR code */}
+                            <div className="bg-white p-2.5 rounded-xl shadow-sm ring-1 ring-zinc-200">
+                                <QRCodeSVG value={booking.id} size={80} level="M" />
+                            </div>
                         </div>
 
-                        {/* QR Stub */}
-                        <div className="pt-4 flex items-center gap-5">
-                            <div className="bg-white p-2.5 rounded-xl shadow-sm ring-1 ring-border">
-                                <QRCodeSVG value={booking.id} size={90} level="M" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Scan to verify</p>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Present this QR code<br />at the cinema entrance.
-                                </p>
-                            </div>
-                        </div>
+                        {/* Scan hint */}
+                        <p className="text-xs text-muted-foreground mt-3 text-center">
+                            Present this QR code at the cinema entrance for entry
+                        </p>
                     </div>
                 </div>
 

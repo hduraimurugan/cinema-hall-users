@@ -126,10 +126,7 @@ const BookingDetailPage = () => {
   };
 
   const handleDownloadTicket = async () => {
-    if (!ticketRef.current) {
-      navigate(`/booking/success?payment_id=${booking.payment_id}`);
-      return;
-    }
+    if (!ticketRef.current) return;
     const html = document.documentElement;
     const wasDark = html.classList.contains('dark');
     try {
@@ -146,9 +143,9 @@ const BookingDetailPage = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch {
+    } catch (err) {
       if (wasDark) html.classList.add('dark');
-      navigate(`/booking/success?payment_id=${booking.payment_id}`);
+      console.error('Failed to download ticket:', err);
     }
   };
 
@@ -285,8 +282,11 @@ const BookingDetailPage = () => {
               {/* Poster thumbnail */}
               {booking.poster_url && (
                 <img
-                  src={booking.poster_url}
+                  src={booking.poster_url.startsWith('https://image.tmdb.org/')
+                    ? `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"}/api/movies/proxy-image?url=${encodeURIComponent(booking.poster_url)}`
+                    : booking.poster_url}
                   alt={booking.movie_title}
+                  crossOrigin="anonymous"
                   className="w-16 h-24 object-cover rounded-lg shadow-lg shrink-0"
                   style={{ border: '2px solid rgba(255,255,255,0.2)' }}
                 />
