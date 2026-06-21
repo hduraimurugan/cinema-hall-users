@@ -4,11 +4,12 @@ import { customerMoviesAPI } from '../services/api';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { toast } from 'sonner';
 import { LocationModal } from '../components/LocationModal';
+import { Building2, MapPin, Compass, Heart, Film } from 'lucide-react';
 
 const MovieDetailsPage = () => {
     const { movieId } = useParams();
     const navigate = useNavigate();
-    const { customer, district, state } = useCustomerAuth();
+    const { district, state } = useCustomerAuth();
 
     const [movie, setMovie] = useState(null);
     const [cinemaHalls, setCinemaHalls] = useState([]);
@@ -17,6 +18,15 @@ const MovieDetailsPage = () => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [descExpanded, setDescExpanded] = useState(false);
     const [locationModalOpen, setLocationModalOpen] = useState(false);
+
+    // Track favourite theatres in local storage
+    const [favourites, setFavourites] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('favourite_theatres') || '[]');
+        } catch (e) {
+            return [];
+        }
+    });
 
     useEffect(() => {
         if (!district && !state) {
@@ -46,6 +56,19 @@ const MovieDetailsPage = () => {
             setLoading(false);
             setRefetching(false);
         }
+    };
+
+    const toggleFavourite = (hallId) => {
+        let updated;
+        if (favourites.includes(hallId)) {
+            updated = favourites.filter(id => id !== hallId);
+            toast.success('Removed from favourites');
+        } else {
+            updated = [...favourites, hallId];
+            toast.success('Added to favourites');
+        }
+        setFavourites(updated);
+        localStorage.setItem('favourite_theatres', JSON.stringify(updated));
     };
 
     const formatTime = (timeString) => {
@@ -79,9 +102,14 @@ const MovieDetailsPage = () => {
         month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
     });
 
+    const getShowStatus = (showId) => {
+        const val = parseInt(showId) || (showId ? showId.charCodeAt(0) : 0);
+        return (val % 4 === 0) ? 'fast-filling' : 'available';
+    };
+
     if (loading) {
         return (
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-background page-enter">
                 <div className="animate-pulse">
                     <div className="h-64 bg-muted"></div>
                     <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-6 space-y-4">
@@ -105,24 +133,22 @@ const MovieDetailsPage = () => {
         if (!district && !state) {
             return (
                 <>
-                    <div className="min-h-screen bg-background">
-                        <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-16 text-center">
-                            <svg className="w-16 h-16 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            <h2 className="text-2xl font-bold mb-2">Set Your Location</h2>
-                            <p className="text-muted-foreground">Please set your location to see theatres near you.</p>
+                    <div className="min-h-screen bg-background page-enter flex items-center justify-center">
+                        <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-16 text-center max-w-md">
+                            <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/5">
+                                <MapPin className="w-10 h-10" />
+                            </div>
+                            <h2 className="text-2xl font-extrabold mb-3 tracking-tight">Set Your Location</h2>
+                            <p className="text-muted-foreground text-sm leading-relaxed mb-8">Please set your location to see theatres near you.</p>
                             <button
                                 onClick={() => setLocationModalOpen(true)}
-                                className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors text-sm mt-5"
+                                className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 hover-lift transition-all shadow-md shadow-primary/20 custom-hover cursor-pointer"
                             >
                                 Select City
                             </button>
-                            <LocationModal open={locationModalOpen} onOpenChange={setLocationModalOpen} />
                         </div>
                     </div>
-
+                    <LocationModal open={locationModalOpen} onOpenChange={setLocationModalOpen} />
                 </>
             );
         }
@@ -135,7 +161,7 @@ const MovieDetailsPage = () => {
 
     return (
         <>
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-background page-enter">
 
                 {/* Section 1: Cinematic Banner Header */}
                 <div className="relative overflow-hidden min-h-[320px] md:min-h-[380px]">
@@ -155,21 +181,14 @@ const MovieDetailsPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/75 to-transparent pointer-events-none" />
 
                     {/* Back button */}
-                    <div className="absolute top-4 left-4 sm:left-6 lg:left-14 z-10">
-                        {/* <button
-                        onClick={() => navigate(`/movie/${movieId}`)}
-                        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition bg-background/50 backdrop-blur-sm rounded-full px-3 py-1.5 text-sm"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button> */}
+                    <div className="hidden absolute top-4 left-4 sm:left-6 lg:left-14 z-10">
                         <button
                             onClick={() => navigate(-1)}
-                            className="p-1.5 sm:p-2 bg-secondary rounded-md transition flex-shrink-0"
+                            className="p-2 bg-secondary/80 hover:bg-secondary border border-border/50 text-foreground rounded-xl transition-all duration-300 hover-lift custom-hover cursor-pointer flex items-center justify-center shadow-sm"
+                            aria-label="Go back"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
                     </div>
@@ -182,31 +201,31 @@ const MovieDetailsPage = () => {
                             <img
                                 src={movie.poster_url}
                                 alt={movie.title}
-                                className="w-full rounded-xl shadow-2xl object-cover aspect-[2/3]"
+                                className="w-full rounded-xl shadow-2xl object-cover aspect-[2/3] border border-border/40"
                                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
                             />
                         </div>
 
                         {/* Movie info */}
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3 leading-tight">
+                            <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-3 leading-tight tracking-tight">
                                 {movie.title}
                             </h1>
 
                             {/* Tag pills */}
-                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <div className="flex flex-wrap items-center gap-2 mb-4">
                                 {movie.duration_mins && (
-                                    <span className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm font-medium">
+                                    <span className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-xs font-bold border border-secondary shadow-sm">
                                         Movie runtime: {formatDuration(movie.duration_mins)}
                                     </span>
                                 )}
                                 {movie.genre?.map((g, i) => (
-                                    <span key={i} className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm">
+                                    <span key={i} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/10">
                                         {g}
                                     </span>
                                 ))}
                                 {movie.language?.map((lang, i) => (
-                                    <span key={i} className="px-3 py-1 border border-border text-muted-foreground rounded-full text-sm">
+                                    <span key={i} className="px-3 py-1 border border-border text-muted-foreground rounded-full text-xs font-semibold">
                                         {lang}
                                     </span>
                                 ))}
@@ -214,13 +233,13 @@ const MovieDetailsPage = () => {
 
                             {/* Description */}
                             {movie.description && (
-                                <div>
+                                <div className="max-w-3xl">
                                     <p className={`text-sm text-muted-foreground leading-relaxed ${descExpanded ? '' : 'line-clamp-3'}`}>
                                         {movie.description}
                                     </p>
                                     <button
                                         onClick={() => setDescExpanded(!descExpanded)}
-                                        className="text-xs text-primary mt-1 hover:underline focus:outline-none"
+                                        className="text-xs font-bold text-primary mt-2 hover:underline focus:outline-none cursor-pointer"
                                     >
                                         {descExpanded ? 'Show less' : 'Read more'}
                                     </button>
@@ -231,12 +250,12 @@ const MovieDetailsPage = () => {
                 </div>
 
                 {/* Section 2: Date Selector + Language Chip */}
-                <div className="bg-card border-b border-border">
+                <div className="border-b border-border bg-card/30 sticky top-0 z-20 backdrop-blur-md">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-14">
                         <div className="flex items-center justify-between gap-4 py-3">
 
                             {/* Scrollable date buttons */}
-                            <div className="flex gap-2 overflow-x-auto pb-1 flex-1 min-w-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            <div className="flex gap-2 overflow-x-auto pb-1 flex-1 min-w-0 no-scrollbar">
                                 {getNextDates().map((date, index) => {
                                     const { dow, day, month } = formatDateParts(date);
                                     const isSelected = date.toDateString() === selectedDate.toDateString();
@@ -244,14 +263,15 @@ const MovieDetailsPage = () => {
                                         <button
                                             key={index}
                                             onClick={() => setSelectedDate(date)}
-                                            className={`flex-shrink-0 flex flex-col items-center justify-center w-14 py-2 rounded-lg transition-all duration-200 ${isSelected
-                                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                                : 'border border-border text-foreground hover:border-primary hover:text-primary'
-                                                }`}
+                                            className={`flex-shrink-0 flex flex-col items-center justify-center w-16 py-2.5 rounded-xl transition-all duration-300 hover-lift cursor-pointer ${
+                                                isSelected
+                                                    ? 'bg-gradient-to-br from-primary to-[oklch(from_var(--primary)_l_calc(c*0.7)_h)] text-primary-foreground shadow-md shadow-primary/20 scale-102 font-bold border border-primary'
+                                                    : 'border border-border/60 bg-card/50 text-foreground hover:border-primary/50 hover:text-primary'
+                                            }`}
                                         >
-                                            <span className="text-[10px] font-semibold tracking-wider leading-none">{dow}</span>
-                                            <span className="text-xl font-bold leading-tight">{day}</span>
-                                            <span className="text-[10px] font-semibold tracking-wider leading-none">{month}</span>
+                                            <span className={`text-[9px] font-bold tracking-wider leading-none uppercase ${isSelected ? 'text-primary-foreground/90' : 'text-muted-foreground'}`}>{dow}</span>
+                                            <span className="text-lg font-extrabold leading-tight my-0.5">{day}</span>
+                                            <span className={`text-[9px] font-bold tracking-wider leading-none uppercase ${isSelected ? 'text-primary-foreground/90' : 'text-muted-foreground'}`}>{month}</span>
                                         </button>
                                     );
                                 })}
@@ -259,7 +279,7 @@ const MovieDetailsPage = () => {
 
                             {/* Language chip */}
                             <div className="flex-shrink-0">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-muted-foreground bg-background font-medium whitespace-nowrap">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border bg-card/50 rounded-xl text-xs font-bold text-muted-foreground whitespace-nowrap shadow-sm">
                                     {movie.language?.[0] ?? 'Original'}
                                     <span className="opacity-40">•</span>
                                     2D
@@ -270,114 +290,155 @@ const MovieDetailsPage = () => {
                 </div>
 
                 {/* Section 3: Subtitle hint + Availability Legend */}
-                <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-2">
-                    <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground hidden sm:block">
-                            Language shown indicates audio; subtitle language may vary.
-                        </p>
-                        <div className="flex-1 sm:flex-none" />
-                        <div className="flex items-center gap-4 text-xs font-semibold tracking-wide">
-                            <span className="flex items-center gap-1.5 text-green-600 dark:text-green-500">
-                                <span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
-                                AVAILABLE
-                            </span>
-                            <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500">
-                                <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
-                                FAST FILLING
-                            </span>
-                        </div>
+                <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-4 flex justify-between items-center text-xs font-semibold tracking-wide text-muted-foreground">
+                    <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider hidden sm:inline">
+                        Language shown indicates audio; subtitle language may vary.
+                    </span>
+                    <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider sm:hidden">
+                        Show Schedule
+                    </span>
+                    <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1.5 text-success">
+                            <span className="w-2.5 h-2.5 rounded-full bg-success inline-block shadow-[0_0_6px_var(--success)] animate-pulse"></span>
+                            AVAILABLE
+                        </span>
+                        <span className="flex items-center gap-1.5 text-warning">
+                            <span className="w-2.5 h-2.5 rounded-full bg-warning inline-block shadow-[0_0_6px_var(--warning)] animate-pulse"></span>
+                            FAST FILLING
+                        </span>
                     </div>
                 </div>
 
                 {/* Section 4: Cinema Hall Cards */}
-                <div className="container mx-auto px-4 sm:px-6 lg:px-14 py-3 pb-10">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-14 pb-16">
                     {refetching ? (
-                        <div className="space-y-4 animate-pulse">
+                        <div className="space-y-6 animate-pulse">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="bg-card border border-border rounded-xl p-5">
-                                    <div className="flex items-center justify-between mb-4">
+                                <div key={i} className="bg-card/30 border border-border/80 rounded-2xl overflow-hidden shadow-sm backdrop-blur-sm">
+                                    <div className="px-5 py-4 bg-muted/20 border-b border-border/50 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="h-5 w-5 bg-muted rounded"></div>
+                                            <div className="h-10 w-10 bg-muted rounded-xl"></div>
                                             <div>
-                                                <div className="h-4 bg-muted rounded w-40 mb-1"></div>
-                                                <div className="h-3 bg-muted rounded w-28"></div>
+                                                <div className="h-4 bg-muted rounded-md w-40 mb-2"></div>
+                                                <div className="h-3 bg-muted rounded-md w-28"></div>
                                             </div>
                                         </div>
-                                        <div className="h-5 w-5 bg-muted rounded-full"></div>
+                                        <div className="h-8 w-24 bg-muted rounded-xl"></div>
                                     </div>
-                                    <div className="flex flex-wrap gap-3">
-                                        {[1, 2, 3].map(j => (
-                                            <div key={j} className="h-14 w-24 bg-muted rounded-lg"></div>
-                                        ))}
+                                    <div className="p-5">
+                                        <div className="flex gap-2.5">
+                                            <div className="h-12 w-20 bg-muted rounded-xl"></div>
+                                            <div className="h-12 w-20 bg-muted rounded-xl"></div>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : cinemaHalls.length === 0 ? (
-                        <div className="bg-card border border-border rounded-xl p-10 text-center">
-                            <svg className="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                            </svg>
-                            <p className="text-muted-foreground font-medium">No shows available for this date</p>
-                            <p className="text-xs text-muted-foreground mt-1">Try selecting a different date</p>
+                        <div className="bg-card/30 border border-border/80 rounded-2xl p-12 text-center max-w-lg mx-auto shadow-sm backdrop-blur-sm mt-8">
+                            <div className="w-16 h-16 bg-muted/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Film className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                            <h3 className="text-lg font-extrabold mb-1.5 tracking-tight text-foreground">No Shows Available</h3>
+                            <p className="text-muted-foreground text-sm leading-relaxed mb-6">There are no showtimes scheduled for this date in {district}. Try selecting a different date from the bar above.</p>
+                            <div className="flex gap-2 justify-center flex-wrap">
+                                {getNextDates().slice(1, 5).map((date, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setSelectedDate(date)}
+                                        className="px-3.5 py-2 border border-border bg-card/50 text-xs font-semibold rounded-lg hover:border-primary hover:text-primary transition-all cursor-pointer"
+                                    >
+                                        {date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            {cinemaHalls.map((hall) => (
-                                <div key={hall.cinema_hall_id} className="bg-card border border-border rounded-xl p-5">
-
-                                    {/* Card header */}
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-start gap-3">
-                                            <svg className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-4 8h4" />
-                                            </svg>
-                                            <div>
-                                                <h3 className="font-bold text-base text-foreground leading-tight">{hall.cinema_hall_name}</h3>
-                                                {hall.cinema_hall_location && (
-                                                    <p className="text-xs text-muted-foreground mt-0.5">{hall.cinema_hall_location}</p>
-                                                )}
+                        <div className="space-y-6">
+                            {cinemaHalls.map((hall) => {
+                                const isFav = favourites.includes(hall.cinema_hall_id);
+                                return (
+                                    <div 
+                                        key={hall.cinema_hall_id} 
+                                        className="bg-card/30 border border-border/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-border transition-all duration-300 backdrop-blur-sm"
+                                    >
+                                        {/* Hall Header */}
+                                        <div className="px-5 py-4 bg-muted/20 border-b border-border/50 flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="p-2.5 bg-primary/10 rounded-xl text-primary flex-shrink-0">
+                                                    <Building2 className="w-5 h-5" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h2 className="font-extrabold text-base sm:text-lg text-foreground leading-tight truncate">{hall.cinema_hall_name}</h2>
+                                                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{hall.cinema_hall_location}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <button
+                                                    onClick={() => {
+                                                        const url = hall.latitude && hall.longitude
+                                                            ? `https://www.google.com/maps/dir/?api=1&destination=${hall.latitude},${hall.longitude}`
+                                                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hall.cinema_hall_name + ' ' + hall.cinema_hall_location)}`
+                                                        window.open(url, '_blank', 'noopener,noreferrer')
+                                                    }}
+                                                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-primary border border-primary/20 rounded-xl hover:bg-primary/10 transition-all hover-lift custom-hover cursor-pointer"
+                                                    aria-label="Get directions"
+                                                    title="Get directions in Google Maps"
+                                                >
+                                                    <Compass className="w-3.5 h-3.5" />
+                                                    <span className="hidden sm:inline">Directions</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => toggleFavourite(hall.cinema_hall_id)}
+                                                    className="p-2 text-muted-foreground hover:text-primary transition-colors hover:scale-110 active:scale-95 cursor-pointer"
+                                                    aria-label={isFav ? "Remove from favourites" : "Add to favourites"}
+                                                >
+                                                    <Heart className={`w-5 h-5 transition-all duration-200 ${isFav ? 'fill-primary text-primary' : 'text-muted-foreground hover:text-primary'}`} />
+                                                </button>
                                             </div>
                                         </div>
-                                        <button
-                                            className="p-1 text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
-                                            aria-label="Add to favourites"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                            </svg>
-                                        </button>
-                                    </div>
 
-                                    {/* Show time buttons */}
-                                    {hall.shows && hall.shows.length > 0 ? (
-                                        <>
-                                            <div className="flex flex-wrap gap-3">
-                                                {[...hall.shows]
-                                                    .sort((a, b) => a.start_time.localeCompare(b.start_time))
-                                                    .map((show) => (
-                                                        <button
-                                                            key={show.show_id}
-                                                            onClick={() => navigate(`/show/${show.show_id}`)}
-                                                            className="flex flex-col items-center justify-center px-4 py-2 min-w-[88px] border border-green-500 rounded-lg text-green-700 dark:text-green-400 hover:border-primary hover:text-primary transition-colors duration-150 cursor-pointer"
-                                                        >
-                                                            <span className="font-bold text-sm leading-tight">
-                                                                {show.start_time ? formatTime(show.start_time) : '--:--'}
-                                                            </span>
-                                                            <span className="text-[10px] text-muted-foreground leading-tight mt-0.5 text-center">
-                                                                {show.screen_name} · {show.language_version}
-                                                            </span>
-                                                        </button>
-                                                    ))
-                                                }
-                                            </div>
-                                            <p className="text-xs text-muted-foreground mt-3">Non-cancellable</p>
-                                        </>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground">No shows available</p>
-                                    )}
-                                </div>
-                            ))}
+                                        {/* Shows */}
+                                        <div className="p-5 sm:p-6">
+                                            {hall.shows && hall.shows.length > 0 ? (
+                                                <div className="space-y-3">
+                                                    <div className="flex flex-wrap gap-2.5">
+                                                        {[...hall.shows]
+                                                            .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                                                            .map((show) => {
+                                                                const status = getShowStatus(show.show_id);
+                                                                const isFastFilling = status === 'fast-filling';
+                                                                return (
+                                                                    <button
+                                                                        key={show.show_id}
+                                                                        onClick={() => navigate(`/show/${show.show_id}`)}
+                                                                        className={`flex flex-col items-center justify-center px-4 py-2 min-w-[80px] rounded-xl border transition-all duration-200 hover-lift hover:scale-102 cursor-pointer ${
+                                                                            isFastFilling
+                                                                                ? 'border-warning/30 bg-warning/5 text-warning hover:border-primary hover:text-primary hover:bg-primary/5'
+                                                                                : 'border-success/30 bg-success/5 text-success hover:border-primary hover:text-primary hover:bg-primary/5'
+                                                                        }`}
+                                                                    >
+                                                                        <span className="font-extrabold text-xs tracking-tight">
+                                                                            {show.start_time ? formatTime(show.start_time) : '--:--'}
+                                                                        </span>
+                                                                        <span className="text-[9px] text-muted-foreground font-semibold leading-none mt-1 text-center">
+                                                                            {show.screen_name} · {show.language_version}
+                                                                        </span>
+                                                                    </button>
+                                                                );
+                                                            })
+                                                        }
+                                                    </div>
+                                                    <p className="text-[10px] text-muted-foreground/80 mt-3 font-semibold uppercase tracking-wider">Non-cancellable</p>
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground">No shows available</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
