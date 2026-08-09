@@ -29,6 +29,10 @@ const MovieCard = ({ movie, showBookNow = true }) => {
     () => (Array.isArray(movie.genre) ? movie.genre : movie.genre ? [movie.genre] : []),
     [movie.genre]
   );
+  const rating = useMemo(() => {
+    const value = parseFloat(movie.vote_average);
+    return Number.isFinite(value) && value > 0 ? value.toFixed(1) : null;
+  }, [movie.vote_average]);
   const languageText = useMemo(
     () => (Array.isArray(movie.language) ? movie.language.join(', ') : movie.language || ''),
     [movie.language]
@@ -62,7 +66,7 @@ const MovieCard = ({ movie, showBookNow = true }) => {
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
-      aria-label={`${movie.title}${movie.rating ? `, rated ${movie.rating}` : ''}`}
+      aria-label={`${movie.title}${rating ? `, rated ${rating}` : ''}`}
       className="group cursor-pointer flex-shrink-0 w-full focus-ring"
     >
       <div className="relative overflow-hidden rounded-2xl shadow-md card-hover bg-card border border-border/40 card-glow-border">
@@ -79,10 +83,10 @@ const MovieCard = ({ movie, showBookNow = true }) => {
         <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/65 via-black/20 to-transparent pointer-events-none" />
 
         {/* Always-visible rating badge */}
-        {movie.rating && (
+        {rating && (
           <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/65 backdrop-blur-md rounded-full pl-1.5 pr-2.5 py-1 shadow-lg shadow-black/20">
             <Star className="w-3.5 h-3.5 fill-rating text-rating" />
-            <span className="text-white text-xs font-bold tabular-nums">{movie.rating}</span>
+            <span className="text-white text-xs font-bold tabular-nums">{rating}</span>
           </div>
         )}
 

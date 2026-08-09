@@ -31,6 +31,8 @@ const HeroSlide = ({ movie, isActive }) => {
   const languageText = Array.isArray(movie.language)
     ? movie.language.join(', ')
     : movie.language || '';
+  const ratingValue = parseFloat(movie.vote_average);
+  const rating = Number.isFinite(ratingValue) && ratingValue > 0 ? ratingValue.toFixed(1) : null;
 
   return (
     <div
@@ -71,10 +73,10 @@ const HeroSlide = ({ movie, isActive }) => {
           </h1>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground mb-4">
-            {movie.rating && (
+            {rating && (
               <span className="flex items-center gap-1">
                 <Star className="size-4 fill-rating text-rating" />
-                <span className="font-semibold text-foreground">{movie.rating}</span>
+                <span className="font-semibold text-foreground">{rating}</span>
               </span>
             )}
             {formatDuration(movie.duration_mins) && (
@@ -230,7 +232,9 @@ const MoviesPage = () => {
         });
         if (cancelled) return;
         const movies = response.movies || [];
-        const sorted = [...movies].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        const sorted = [...movies].sort(
+          (a, b) => (parseFloat(b.vote_average) || 0) - (parseFloat(a.vote_average) || 0)
+        );
         setHeroMovies(sorted.slice(0, 5));
       } catch {
         if (!cancelled) setHeroMovies([]);
