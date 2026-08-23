@@ -487,3 +487,59 @@ export const showsAPI = {
   }
 };
 
+// ✅ Notifications API (in-app notification center)
+export const notificationAPI = {
+  list: async (page = 1, limit = 20) => {
+    const response = await fetch(`${API_BASE_URL}/api/notifications?page=${page}&limit=${limit}`, {
+      credentials: "include",
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  getUnreadCount: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/unread-count`, {
+      credentials: "include",
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  markAsRead: async (notificationId) => {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}/read`, {
+      method: "PATCH",
+      credentials: "include",
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  markAllRead: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
+      method: "PATCH",
+      credentials: "include",
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  getPreferences: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/preferences`, {
+      credentials: "include",
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  updatePreferences: async (patch) => {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/preferences`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ patch }),
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+};
+

@@ -18,6 +18,7 @@ import { ProtectedRoute } from './routes/ProtectedRoutes.jsx';
 import OffersPage from './pages/OffersPage.jsx';
 import BookingDetailPage from './pages/BookingDetailPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import Notifications from './pages/Notifications.jsx';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
             <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetailPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/movies" replace />} />
         </Routes>

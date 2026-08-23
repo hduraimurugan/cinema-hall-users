@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Film, Bell, Search, MapPin, User, LogOut, Settings, Sun, Moon, Menu, X, Ticket } from 'lucide-react'
+import { formatDistanceToNow } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -17,12 +18,9 @@ import { useTheme } from "../context/ThemeContext"
 import { LoginModal } from "./LoginModal"
 import { LocationModal } from "./LocationModal"
 import SearchMovies from "./SearchMovies"
+import { notificationAPI } from "../services/api"
 
-const mockNotifications = [
-    { id: 1, title: "Booking confirmed — Thaai Kizhavi", time: "2 min ago", unread: true },
-    { id: 2, title: "Upcoming show reminder in 2 hours", time: "1 hour ago", unread: true },
-    { id: 3, title: "Special offer: 20% off on weekdays", time: "3 hours ago", unread: false },
-]
+const NOTIFICATION_POLL_MS = 25000
 
 export function TopBar() {
     const [searchValue, setSearchValue] = useState("")
@@ -34,6 +32,9 @@ export function TopBar() {
     const { theme, toggleTheme } = useTheme()
     const location = useLocation()
     const navigate = useNavigate()
+
+    const [notifications, setNotifications] = useState([])
+    const [unreadCount, setUnreadCount] = useState(0)
 
     useEffect(() => {
         if (location.state?.openLogin) {
@@ -48,6 +49,46 @@ export function TopBar() {
         }
     }, [locationLoading, district, state])
 
+    const refreshNotifications = useCallback(async () => {
+        try {
+            const [{ notifications: list }, { count }] = await Promise.all([
+                notificationAPI.list(1, 5),
+                notificationAPI.getUnreadCount(),
+            ])
+            setNotifications(list)
+            setUnreadCount(count)
+        } catch {
+            // Non-fatal — the bell just doesn't update this cycle.
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!customer) {
+            setNotifications([])
+            setUnreadCount(0)
+            return
+        }
+
+        refreshNotifications()
+
+        const interval = setInterval(() => {
+            if (document.visibilityState === "visible") refreshNotifications()
+        }, NOTIFICATION_POLL_MS)
+        return () => clearInterval(interval)
+    }, [customer, refreshNotifications])
+
+    const handleNotificationClick = async (notification) => {
+        if (!notification.read_at) {
+            setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n))
+            setUnreadCount(prev => Math.max(0, prev - 1))
+            try {
+                await notificationAPI.markAsRead(notification.id)
+            } catch {
+                // Non-fatal — next poll will resync.
+            }
+        }
+    }
+
     const handleSearch = (e) => {
         e.preventDefault()
         if (searchValue.trim()) {
@@ -55,8 +96,6 @@ export function TopBar() {
             setMobileSearchOpen(false)
         }
     }
-
-    const unreadCount = mockNotifications.filter(n => n.unread).length
 
     return (
         <>
@@ -185,14 +224,23 @@ export function TopBar() {
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <div className="max-h-64 overflow-y-auto">
-                                        {mockNotifications.map((n) => (
-                                            <DropdownMenuItem key={n.id} className="flex items-start gap-3 p-3 cursor-pointer">
-                                                <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${n.unread ? "bg-primary" : "bg-transparent"}`} aria-hidden="true" />
+                                        {notifications.length === 0 && (
+                                            <p className="px-3 py-6 text-center text-sm text-muted-foreground">No notifications yet</p>
+                                        )}
+                                        {notifications.map((n) => (
+                                            <DropdownMenuItem
+                                                key={n.id}
+                                                className="flex items-start gap-3 p-3 cursor-pointer"
+                                                onClick={() => handleNotificationClick(n)}
+                                            >
+                                                <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${!n.read_at ? "bg-primary" : "bg-transparent"}`} aria-hidden="true" />
                                                 <div className="flex-1 min-w-0">
-                                                    <p className={`text-sm leading-snug ${n.unread ? "font-medium" : "text-muted-foreground"}`}>
+                                                    <p className={`text-sm leading-snug ${!n.read_at ? "font-medium" : "text-muted-foreground"}`}>
                                                         {n.title}
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground mt-0.5">{n.time}</p>
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                                        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                                                    </p>
                                                 </div>
                                             </DropdownMenuItem>
                                         ))}
