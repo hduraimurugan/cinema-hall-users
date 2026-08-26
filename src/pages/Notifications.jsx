@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bell, CheckCheck } from "lucide-react"
+import { Bell, BellRing, CheckCheck } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { notificationAPI } from "../services/api"
+import { requestPushToken } from "../lib/firebase"
 
 const PAGE_SIZE = 20
 
@@ -11,6 +12,25 @@ const Notifications = () => {
     const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(false)
     const [loading, setLoading] = useState(true)
+    const [pushEnabled, setPushEnabled] = useState(
+        typeof Notification !== "undefined" && Notification.permission === "granted"
+    )
+    const [pushBusy, setPushBusy] = useState(false)
+
+    const handleEnablePush = async () => {
+        setPushBusy(true)
+        try {
+            const token = await requestPushToken()
+            if (token) {
+                await notificationAPI.registerDeviceToken(token, "web")
+                setPushEnabled(true)
+            }
+        } catch {
+            // Non-fatal — push just stays off.
+        } finally {
+            setPushBusy(false)
+        }
+    }
 
     const load = useCallback(async (targetPage) => {
         setLoading(true)
@@ -51,13 +71,20 @@ const Notifications = () => {
 
     return (
         <div className="max-w-2xl mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 gap-2">
                 <h1 className="text-xl font-bold">Notifications</h1>
-                {unreadCount > 0 && (
-                    <Button variant="ghost" size="sm" className="gap-1.5 text-primary" onClick={handleMarkAllRead}>
-                        <CheckCheck className="h-4 w-4" /> Mark all read
-                    </Button>
-                )}
+                <div className="flex items-center gap-2">
+                    {!pushEnabled && (
+                        <Button variant="outline" size="sm" className="gap-1.5" disabled={pushBusy} onClick={handleEnablePush}>
+                            <BellRing className="h-4 w-4" /> {pushBusy ? "Enabling…" : "Enable push"}
+                        </Button>
+                    )}
+                    {unreadCount > 0 && (
+                        <Button variant="ghost" size="sm" className="gap-1.5 text-primary" onClick={handleMarkAllRead}>
+                            <CheckCheck className="h-4 w-4" /> Mark all read
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {notifications.length === 0 && !loading ? (

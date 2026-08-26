@@ -531,6 +531,28 @@ export const notificationAPI = {
     return response.json();
   },
 
+  registerDeviceToken: async (token, platform = "web") => {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/device-token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ token, platform }),
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
+  unregisterDeviceToken: async (token) => {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/device-token`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ token }),
+    });
+    if (!response.ok) throw await response.json();
+    return response.json();
+  },
+
   updatePreferences: async (patch) => {
     const response = await fetch(`${API_BASE_URL}/api/notifications/preferences`, {
       method: "PATCH",
