@@ -18,9 +18,13 @@ const messaging = firebase.messaging();
 // Background/killed-tab delivery — foreground messages are handled in
 // src/lib/firebase.js via onMessage() instead.
 messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification || {};
+  // The admin SDK sends `imageUrl` (see services/notification/channels/push.js)
+  // but the client-received web payload renames it to `image` — see
+  // https://firebase.google.com/docs/reference/js/messaging_.notificationpayload
+  const { title, body, image } = payload.notification || {};
   self.registration.showNotification(title || 'CineMax', {
     body: body || '',
     icon: '/cinemax_logo.png',
+    ...(image ? { image } : {}),
   });
 });
