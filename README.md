@@ -78,6 +78,18 @@ Create a `.env` file in the root of the `cinema-hall-users` directory:
 ```env
 # URL pointing to the API service
 VITE_API_BASE_URL=http://localhost:5000
+
+# OAuth Configuration
+VITE_GOOGLE_CLIENT_ID=<google_oauth_client_id>
+
+# Firebase (push notifications)
+VITE_FIREBASE_API_KEY=<firebase_api_key>
+VITE_FIREBASE_AUTH_DOMAIN=<project-id>.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=<firebase_project_id>
+VITE_FIREBASE_STORAGE_BUCKET=<project-id>.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=<firebase_sender_id>
+VITE_FIREBASE_APP_ID=<firebase_app_id>
+VITE_FIREBASE_VAPID_KEY=<firebase_vapid_key>
 ```
 
 ---
