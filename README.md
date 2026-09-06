@@ -4,9 +4,22 @@
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.x-38B2AC?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Razorpay](https://img.shields.io/badge/Razorpay-v2.x-002E6E?logo=razorpay&logoColor=white)](https://razorpay.com/)
-[![License](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A gorgeous, responsive customer portal built with **React**, **Vite**, and **Tailwind CSS**. Users can discover cinemas near them, browse movies with local availability, explore schedules, reserve seats dynamically with a real-time countdown, apply promo discounts, and purchase tickets via a secure Razorpay gateway.
+
+> Part of the **[Cinema Hall Platform](../README.md)** — see also [cinema-hall-admin](../cinema-hall-admin) (admin panel), [cinema-hall-api](../cinema-hall-api) (backend), and [cinemax-mcp-server](../cinemax-mcp-server) (AI/MCP integration).
+
+---
+
+## 📑 Table of Contents
+
+- [Core Features](#-core-features)
+- [Folder Architecture](#-folder-architecture)
+- [Environment Setup](#-environment-setup)
+- [Execution Instructions](#-execution-instructions)
+- [User Application Documentation](#-user-application-documentation)
+- [License](#-license)
 
 ---
 
@@ -97,3 +110,8 @@ npm run preview
 
 ## 📘 User Application Documentation
 For structural walkthroughs, component specifications, and workflow diagrams, review [docs/users.md](../docs/users.md).
+
+---
+
+## 📄 License
+Licensed under the [MIT License](LICENSE).
